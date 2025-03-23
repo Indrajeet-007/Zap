@@ -1,4 +1,5 @@
-
+import { InteractiveHoverButton } from "./magicui/interactive-hover-button";
+import { TextAnimate } from "./magicui/text-animate";
 import { Link } from "react-router-dom";
 
 ("use client");
@@ -26,7 +27,28 @@ function LandingPage() {
         color={color}
         refresh
       />
-      
+      <main flex-1 justify-center z-10>
+        <div className="w-[650px] mt-2 mb-10">
+          <TextAnimate
+            animation="blurInUp"
+            by="character"
+            once={false}
+            delay={0}
+            className="text-xl py-4 text-stone-800"
+          >
+            DropUI is a powerful visual builder that lets you create stunning
+            websites without writing a single line of code. Just drag and drop.
+          </TextAnimate>
+        </div>
+
+        <div className="flex mt-2 flex-col gap-2 min-[400px]:flex-row justify-center">
+          <Link to="/home">
+            <InteractiveHoverButton>
+              Get Started to Share{" "}
+            </InteractiveHoverButton>
+          </Link>
+        </div>
+      </main>
     </div>
   );
 }
