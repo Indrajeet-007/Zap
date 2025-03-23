@@ -143,11 +143,9 @@ function Home() {
       <div className="mb-8 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            {isConnected ? (
+            {isConnected ?
               <Wifi className="h-5 w-5 text-green-600 dark:text-green-500" />
-            ) : (
-              <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />
-            )}
+            : <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />}
             <span className="font-medium">
               Status: {isConnected ? "Connected" : "Disconnected"}
             </span>
@@ -187,21 +185,21 @@ function Home() {
           </h2>
         </div>
 
-        {connectedUsers.length > 0 ? (
+        {connectedUsers.length > 0 ?
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {connectedUsers.map((user) => (
               <div
                 key={user.id}
                 className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors
                     ${
-                      recipientId === user.id
-                        ? "bg-zinc-200 dark:bg-zinc-700"
-                        : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      recipientId === user.id ?
+                        "bg-zinc-200 dark:bg-zinc-700"
+                      : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                     }
                     ${
-                      user.id === userid
-                        ? "border-l-4 border-zinc-400 dark:border-zinc-500"
-                        : ""
+                      user.id === userid ?
+                        "border-l-4 border-zinc-400 dark:border-zinc-500"
+                      : ""
                     }
                   `}
                 onClick={() => user.id !== userid && selectRecipient(user.id)}
@@ -233,11 +231,10 @@ function Home() {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
+        : <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
             No users connected
           </div>
-        )}
+        }
       </div>
 
       {/* Send File Section */}
@@ -300,17 +297,16 @@ function Home() {
                 disabled:text-zinc-500 dark:disabled:text-zinc-400
                 disabled:cursor-not-allowed transition-colors"
           >
-            {isUploading ? (
+            {isUploading ?
               <>
                 <Loader2 className="animate-spin h-4 w-4 mr-2" />
                 Uploading...
               </>
-            ) : (
-              <>
+            : <>
                 <ArrowUpFromLine className="h-4 w-4 mr-2" />
                 Send File
               </>
-            )}
+            }
           </button>
         </div>
 
