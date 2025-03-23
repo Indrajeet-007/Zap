@@ -1,14 +1,11 @@
-import { InteractiveHoverButton } from "./magicui/interactive-hover-button";
-import { TextAnimate } from "./magicui/text-animate";
-import { Link } from "react-router-dom";
-
-("use client");
-
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-
+import { Link } from "react-router-dom";
+import InteractiveHoverButton from "./magicui/interactive-hover-button";
 import { Particles } from "./magicui/particles";
-function LandingPage() {
+import { TextAnimate } from "./magicui/text-animate";
+
+export default function LandingPage() {
   const { resolvedTheme } = useTheme();
   const [color, setColor] = useState("#ffffff");
 
@@ -52,5 +49,3 @@ function LandingPage() {
     </div>
   );
 }
-
-export default LandingPage;

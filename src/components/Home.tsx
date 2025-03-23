@@ -1,5 +1,3 @@
-import { useEffect, useState, useRef } from "react";
-import { socket } from "../lib/socket";
 import {
   ArrowUpFromLine,
   CheckCircle,
@@ -7,11 +5,14 @@ import {
   FileIcon,
   Loader2,
   RefreshCw,
+  Users,
   Wifi,
   WifiOff,
-  Users,
 } from "lucide-react";
-function Home() {
+import { useEffect, useRef, useState } from "react";
+import { socket } from "../lib/socket";
+
+export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   interface ReceivedFile {
     name: string;
@@ -351,5 +352,3 @@ function Home() {
     </main>
   );
 }
-
-export default Home;

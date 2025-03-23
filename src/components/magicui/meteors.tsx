@@ -1,9 +1,7 @@
-"use client";
-
 import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 
-interface MeteorsProps {
+export interface MeteorsProps {
   number?: number;
   minDelay?: number;
   maxDelay?: number;
@@ -13,7 +11,7 @@ interface MeteorsProps {
   className?: string;
 }
 
-export const Meteors = ({
+export default function Meteors({
   number = 20,
   minDelay = 0.2,
   maxDelay = 1.2,
@@ -21,7 +19,7 @@ export const Meteors = ({
   maxDuration = 10,
   angle = 215,
   className,
-}: MeteorsProps) => {
+}: MeteorsProps) {
   const [meteorStyles, setMeteorStyles] = useState<Array<React.CSSProperties>>(
     [],
   );
@@ -57,4 +55,4 @@ export const Meteors = ({
       ))}
     </>
   );
-};
+}

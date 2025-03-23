@@ -1,5 +1,6 @@
-import croplogo from "/croplogo.jpg";
 import { Link } from "react-router-dom";
+import croplogo from "/croplogo.jpg";
+
 export default function NavBar() {
   return (
     <nav className="flex pb-2 items-center justify-between backdrop-blur-lg ">

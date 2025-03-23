@@ -1,4 +1,5 @@
 import croplogo from "/croplogo.jpg";
+
 export default function Footer() {
   return (
     <footer className="backdrop-blur-lg mt-5">
