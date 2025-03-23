@@ -180,13 +180,17 @@ export default function Home() {
 
       <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
         <DeviceRadar
-          devices={connectedUsers.map((user) => ({
-            id: user.id,
-            name: user.id === userid ? "You" : user.id,
-            type: "desktop",
-            avatar: "/placeholder.svg?height=40&width=40",
-            online: true,
-          }))}
+          devices={connectedUsers
+            .filter((user) => user.id !== userid)
+            .map((user) => ({
+              id: user.id,
+              name: user.id.slice(0, 8) + "...",
+              type: "desktop",
+              avatar: "/placeholder.svg?height=40&width=40",
+              online: true,
+            }))}
+          selectedId={recipientId}
+          onDeviceClick={(device) => selectRecipient(device.id)}
         />
       </div>
 

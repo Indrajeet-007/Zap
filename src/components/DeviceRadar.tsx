@@ -13,14 +13,24 @@ export interface Device {
 
 interface DeviceRadarProps {
   devices: Device[];
+  selectedId?: string;
+  onDeviceClick?: (device: Device) => void;
 }
 
-export default function DeviceRadar({ devices }: DeviceRadarProps) {
-  // Store positions mapping: id -> { x, y }
-  const [positions, setPositions] = useState<
-    Record<string, { x: number; y: number }>
-  >({});
+interface DeviceItemProps {
+  device: Device;
+  position: { x: number; y: number };
+  isSelected: boolean;
+  onClick?: (device: Device) => void;
+}
 
+// DeviceItem handles the rendering of a single device on the radar
+function DeviceItem({
+  device,
+  position,
+  isSelected,
+  onClick,
+}: DeviceItemProps) {
   // Function to get icon based on device type
   const getDeviceIcon = (type: string) => {
     switch (type) {
@@ -38,6 +48,71 @@ export default function DeviceRadar({ devices }: DeviceRadarProps) {
         return <Laptop className="h-5 w-5" />;
     }
   };
+
+  return (
+    <motion.div
+      className="absolute top-1/2 left-1/2 cursor-pointer"
+      animate={{
+        x: position?.x || 0,
+        y: position?.y || 0,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 50,
+        damping: 20,
+      }}
+      style={{
+        translateX: "-50%",
+        translateY: "-50%",
+        opacity: device.online ? 1 : 0.5,
+      }}
+      onClick={() => onClick && onClick(device)}
+    >
+      <div className="flex flex-col items-center">
+        <motion.div whileHover={{ scale: 1.1 }} className="relative">
+          <Avatar
+            className={`h-12 w-12 border-2 ${
+              device.online ? "border-green-500" : "border-gray-300"
+            }`}
+          >
+            <AvatarImage src={device.avatar} alt={device.name} />
+            <AvatarFallback
+              className={`${isSelected ? "bg-green-500 text-gray-50" : "bg-gray-200 text-gray-800"} `}
+            >
+              {getDeviceIcon(device.type)}
+            </AvatarFallback>
+          </Avatar>
+          {device.online && (
+            <motion.div
+              className="absolute -inset-1 rounded-full border border-green-500/50"
+              animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
+              transition={{
+                duration: 2,
+                repeat: Number.POSITIVE_INFINITY,
+              }}
+            />
+          )}
+        </motion.div>
+        <span className="mt-2 text-xs font-medium whitespace-nowrap text-gray-800">
+          {device.name}
+        </span>
+        <span className="text-[10px] text-gray-600">
+          {device.online ? "Online" : "Offline"}
+        </span>
+      </div>
+    </motion.div>
+  );
+}
+
+export default function DeviceRadar({
+  devices,
+  selectedId,
+  onDeviceClick,
+}: DeviceRadarProps) {
+  // Store positions mapping: id -> { x, y }
+  const [positions, setPositions] = useState<
+    Record<string, { x: number; y: number }>
+  >({});
 
   // Calculate and update positions mapping with slight random offset for animation
   useEffect(() => {
@@ -104,55 +179,13 @@ export default function DeviceRadar({ devices }: DeviceRadarProps) {
 
         {/* Devices */}
         {devices.map((device) => (
-          <motion.div
+          <DeviceItem
             key={device.id}
-            className="absolute top-1/2 left-1/2"
-            animate={{
-              x: positions[device.id]?.x || 0,
-              y: positions[device.id]?.y || 0,
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 50,
-              damping: 20,
-            }}
-            style={{
-              translateX: "-50%",
-              translateY: "-50%",
-              opacity: device.online ? 1 : 0.5,
-            }}
-          >
-            <div className="flex flex-col items-center">
-              <motion.div whileHover={{ scale: 1.1 }} className="relative">
-                <Avatar
-                  className={`h-12 w-12 border-2 ${
-                    device.online ? "border-green-500" : "border-gray-300"
-                  }`}
-                >
-                  <AvatarImage src={device.avatar} alt={device.name} />
-                  <AvatarFallback className="bg-gray-200 text-gray-800">
-                    {getDeviceIcon(device.type)}
-                  </AvatarFallback>
-                </Avatar>
-                {device.online && (
-                  <motion.div
-                    className="absolute -inset-1 rounded-full border border-green-500/50"
-                    animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
-                    transition={{
-                      duration: 2,
-                      repeat: Number.POSITIVE_INFINITY,
-                    }}
-                  />
-                )}
-              </motion.div>
-              <span className="mt-2 text-xs font-medium whitespace-nowrap text-gray-800">
-                {device.name}
-              </span>
-              <span className="text-[10px] text-gray-600">
-                {device.online ? "Online" : "Offline"}
-              </span>
-            </div>
-          </motion.div>
+            device={device}
+            position={positions[device.id] || { x: 0, y: 0 }}
+            isSelected={selectedId === device.id}
+            onClick={onDeviceClick}
+          />
         ))}
       </div>
     </div>
