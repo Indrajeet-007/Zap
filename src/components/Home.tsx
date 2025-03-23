@@ -139,9 +139,9 @@ export default function Home() {
   };
 
   return (
-    <main className="flex-1 w-full max-w-3xl mx-auto p-4 md:p-6">
+    <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
       {/* Connection Status */}
-      <div className="mb-8 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+      <div className="mb-8 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             {isConnected ?
@@ -153,23 +153,23 @@ export default function Home() {
           </div>
           <div className="flex items-center">
             <RefreshCw
-              className="h-5 w-5 mr-2 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
+              className="mr-2 h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
               onClick={() => socket.connect()}
             />
           </div>
         </div>
 
         {userid && (
-          <div className="mt-4 p-3 bg-zinc-100 dark:bg-zinc-800 rounded flex items-center justify-between">
-            <div className="truncate flex-1">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400 block">
+          <div className="mt-4 flex items-center justify-between rounded bg-zinc-100 p-3 dark:bg-zinc-800">
+            <div className="flex-1 truncate">
+              <span className="block text-sm text-zinc-500 dark:text-zinc-400">
                 Your ID:
               </span>
               <span className="font-mono text-sm">{userid}</span>
             </div>
             <button
               onClick={() => copyToClipboard(userid)}
-              className="ml-2 p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              className="ml-2 rounded-full p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               aria-label="Copy ID"
             >
               <Copy className="h-4 w-4" />
@@ -178,35 +178,32 @@ export default function Home() {
         )}
       </div>
 
-      <div className="mb-8 p-6 border border-zinc-200 dark:border-zinc-800 rounded-lg">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center">
-            <Users className="h-5 w-5 mr-2" />
+      <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center text-xl font-semibold">
+            <Users className="mr-2 h-5 w-5" />
             Connected Users ({connectedUsers.length})
           </h2>
         </div>
 
         {connectedUsers.length > 0 ?
-          <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="max-h-60 space-y-2 overflow-y-auto">
             {connectedUsers.map((user) => (
               <div
                 key={user.id}
-                className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors
-                    ${
-                      recipientId === user.id ?
-                        "bg-zinc-200 dark:bg-zinc-700"
-                      : "bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                    }
-                    ${
-                      user.id === userid ?
-                        "border-l-4 border-zinc-400 dark:border-zinc-500"
-                      : ""
-                    }
-                  `}
+                className={`flex cursor-pointer items-center justify-between rounded-md p-3 transition-colors ${
+                  recipientId === user.id ?
+                    "bg-zinc-200 dark:bg-zinc-700"
+                  : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                } ${
+                  user.id === userid ?
+                    "border-l-4 border-zinc-400 dark:border-zinc-500"
+                  : ""
+                } `}
                 onClick={() => user.id !== userid && selectRecipient(user.id)}
               >
-                <div className="truncate flex-1">
-                  <span className="font-mono text-sm block truncate">
+                <div className="flex-1 truncate">
+                  <span className="block truncate font-mono text-sm">
                     {user.id}
                   </span>
                   {user.id === userid && (
@@ -222,7 +219,7 @@ export default function Home() {
                         e.stopPropagation();
                         copyToClipboard(user.id);
                       }}
-                      className="p-1.5 rounded-full hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                      className="rounded-full p-1.5 hover:bg-zinc-300 dark:hover:bg-zinc-600"
                       aria-label="Copy ID"
                     >
                       <Copy className="h-3.5 w-3.5" />
@@ -232,19 +229,19 @@ export default function Home() {
               </div>
             ))}
           </div>
-        : <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
+        : <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
             No users connected
           </div>
         }
       </div>
 
       {/* Send File Section */}
-      <div className="mb-8 p-6 border border-zinc-200 dark:border-zinc-800 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Send a File</h2>
+      <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
+        <h2 className="mb-4 text-xl font-semibold">Send a File</h2>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="mb-1 block text-sm font-medium">
               Select File
             </label>
             <div className="relative">
@@ -253,17 +250,12 @@ export default function Home() {
                 onChange={(e) =>
                   e.target.files && setSelectedFile(e.target.files[0])
                 }
-                className="block w-full text-sm file:mr-4 file:py-2 file:px-4
-                    file:rounded-md file:border-0 file:font-medium
-                    file:bg-zinc-100 file:text-zinc-700
-                    dark:file:bg-zinc-800 dark:file:text-zinc-200
-                    hover:file:bg-zinc-200 dark:hover:file:bg-zinc-700
-                    border border-zinc-300 dark:border-zinc-700 rounded-md"
+                className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
               />
             </div>
             {selectedFile && (
-              <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400 flex items-center">
-                <FileIcon className="h-4 w-4 mr-1" />
+              <div className="mt-2 flex items-center text-sm text-zinc-600 dark:text-zinc-400">
+                <FileIcon className="mr-1 h-4 w-4" />
                 {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
               </div>
             )}
@@ -272,7 +264,7 @@ export default function Home() {
           <div>
             <label
               htmlFor="recipient"
-              className="block text-sm font-medium mb-1"
+              className="mb-1 block text-sm font-medium"
             >
               Recipient ID
             </label>
@@ -282,29 +274,22 @@ export default function Home() {
               placeholder="Enter Recipient ID"
               value={recipientId}
               onChange={(e) => setRecipientId(e.target.value)}
-              className="w-full p-2 border border-zinc-300 dark:border-zinc-700 rounded-md 
-                  bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 
-                  focus:ring-zinc-400 dark:focus:ring-zinc-600"
+              className="w-full rounded-md border border-zinc-300 bg-white p-2 focus:ring-2 focus:ring-zinc-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:focus:ring-zinc-600"
             />
           </div>
 
           <button
             onClick={sendFile}
             disabled={isUploading || !selectedFile || !recipientId}
-            className="w-full flex items-center justify-center px-4 py-2 rounded-md
-                bg-zinc-900 text-white dark:bg-white dark:text-zinc-900
-                hover:bg-zinc-800 dark:hover:bg-zinc-200
-                disabled:bg-zinc-300 dark:disabled:bg-zinc-700
-                disabled:text-zinc-500 dark:disabled:text-zinc-400
-                disabled:cursor-not-allowed transition-colors"
+            className="flex w-full items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-400"
           >
             {isUploading ?
               <>
-                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Uploading...
               </>
             : <>
-                <ArrowUpFromLine className="h-4 w-4 mr-2" />
+                <ArrowUpFromLine className="mr-2 h-4 w-4" />
                 Send File
               </>
             }
@@ -314,13 +299,13 @@ export default function Home() {
         {/* Progress Bar */}
         {isUploading && (
           <div className="mt-4">
-            <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
               <div
-                className="bg-zinc-900 dark:bg-white h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 text-center mt-2">
+            <p className="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
               {Math.round(progress)}% Uploaded
             </p>
           </div>
@@ -329,21 +314,19 @@ export default function Home() {
 
       {/* Received File Section */}
       {receivedFile && (
-        <div className="p-6 border border-zinc-200 dark:border-zinc-800 rounded-lg">
-          <h2 className="text-xl font-semibold mb-4">Received File</h2>
-          <div className="p-4 bg-zinc-100 dark:bg-zinc-800 rounded-md flex items-center">
-            <FileIcon className="h-8 w-8 mr-3 text-zinc-600 dark:text-zinc-300" />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium truncate">{receivedFile.name}</p>
+        <div className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
+          <h2 className="mb-4 text-xl font-semibold">Received File</h2>
+          <div className="flex items-center rounded-md bg-zinc-100 p-4 dark:bg-zinc-800">
+            <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{receivedFile.name}</p>
             </div>
             <a
               href={receivedFile.file}
               download={receivedFile.name}
-              className="ml-4 inline-flex items-center px-3 py-1.5 rounded-md
-                  bg-zinc-900 text-white dark:bg-white dark:text-zinc-900
-                  hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
+              className="ml-4 inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
-              <CheckCircle className="h-4 w-4 mr-1" />
+              <CheckCircle className="mr-1 h-4 w-4" />
               Download
             </a>
           </div>
