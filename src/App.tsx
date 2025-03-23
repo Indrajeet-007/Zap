@@ -1,10 +1,11 @@
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import "./App.css";
 import Footer from "./components/Footer";
 import Home from "./components/Home";
 import LandingPage from "./components/LandingPage";
 import NavBar from "./components/Navbar";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
-function App() {
+
+export default function App() {
   return (
     <Router>
       <NavBar />
@@ -16,5 +17,3 @@ function App() {
     </Router>
   );
 }
-
-export default App;
