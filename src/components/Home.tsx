@@ -5,12 +5,12 @@ import {
   FileIcon,
   Loader2,
   RefreshCw,
-  Users,
   Wifi,
   WifiOff,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../lib/socket";
+import DeviceRadar from "./DeviceRadar";
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
@@ -179,60 +179,15 @@ export default function Home() {
       </div>
 
       <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center text-xl font-semibold">
-            <Users className="mr-2 h-5 w-5" />
-            Connected Users ({connectedUsers.length})
-          </h2>
-        </div>
-
-        {connectedUsers.length > 0 ?
-          <div className="max-h-60 space-y-2 overflow-y-auto">
-            {connectedUsers.map((user) => (
-              <div
-                key={user.id}
-                className={`flex cursor-pointer items-center justify-between rounded-md p-3 transition-colors ${
-                  recipientId === user.id ?
-                    "bg-zinc-200 dark:bg-zinc-700"
-                  : "bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
-                } ${
-                  user.id === userid ?
-                    "border-l-4 border-zinc-400 dark:border-zinc-500"
-                  : ""
-                } `}
-                onClick={() => user.id !== userid && selectRecipient(user.id)}
-              >
-                <div className="flex-1 truncate">
-                  <span className="block truncate font-mono text-sm">
-                    {user.id}
-                  </span>
-                  {user.id === userid && (
-                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                      You
-                    </span>
-                  )}
-                </div>
-                {user.id !== userid && (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        copyToClipboard(user.id);
-                      }}
-                      className="rounded-full p-1.5 hover:bg-zinc-300 dark:hover:bg-zinc-600"
-                      aria-label="Copy ID"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        : <div className="py-8 text-center text-zinc-500 dark:text-zinc-400">
-            No users connected
-          </div>
-        }
+        <DeviceRadar
+          devices={connectedUsers.map((user) => ({
+            id: user.id,
+            name: user.id === userid ? "You" : user.id,
+            type: "desktop",
+            avatar: "/placeholder.svg?height=40&width=40",
+            online: true,
+          }))}
+        />
       </div>
 
       {/* Send File Section */}
