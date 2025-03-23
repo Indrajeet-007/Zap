@@ -36,8 +36,7 @@ function LandingPage() {
             delay={0}
             className="text-xl py-4 text-stone-800"
           >
-            DropUI is a powerful visual builder that lets you create stunning
-            websites without writing a single line of code. Just drag and drop.
+            Transfer files in a flash with SwiftShare — no cables, no cloud, just speed.
           </TextAnimate>
         </div>
 
