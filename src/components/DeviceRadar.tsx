@@ -163,7 +163,7 @@ export default function DeviceRadar({
             className="absolute top-0 left-0 h-full w-full origin-center"
             style={{
               background:
-                "conic-gradient(from 0deg, transparent 0deg, rgba(74, 222, 128, 0.5) 0deg, rgba(74, 222, 128, 0.5) 60deg, transparent 60deg)",
+                "conic-gradient(from 0deg, transparent 0deg, rgba(74, 222, 128, 0.5) 0deg, rgba(74, 222, 128, 0.5) 120deg, transparent 120deg)",
             }}
             animate={{ rotate: 360 }}
             transition={{
