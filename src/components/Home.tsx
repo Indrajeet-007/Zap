@@ -1,425 +1,40 @@
 // Home.tsx
+import api from "@/lib/api";
+import socket from "@/lib/socket";
+import $state from "@/lib/state";
+import { copyToClipboard, formatFileSize } from "@/lib/utils";
+import { useSignal } from "@preact/signals-react";
 import {
   ArrowUpFromLine,
-  CheckCircle,
   Copy,
   FileIcon,
   FolderIcon,
   Loader2,
-  RefreshCw,
   Wifi,
   WifiOff,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-
-interface ReceivedFile {
-  name: string;
-  file: string;
-  size: number;
-  receivedAt: Date;
-  path?: string;
-}
-
-interface SelectedFile {
-  file: File;
-  path: string;
-  relativePath: string;
-}
 
 export default function Home() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-  const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
-  const [progress, setProgress] = useState<{ [key: string]: number }>({});
-  const [isUploading, setIsUploading] = useState(false);
-  const [recipientIds, setRecipientIds] = useState<string[]>([]);
-  const [userid, setuserid] = useState("");
-  const [transferSpeed, setTransferSpeed] = useState<{ [key: string]: string }>(
-    {},
-  );
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
+  const isConnected = socket.value?.ws.readyState === WebSocket.OPEN;
+  const state = $state.value;
+  const recipientIds = useSignal<Set<string>>(new Set());
+  const selectedFiles = useSignal<
+    {
+      relativePath: string;
+      file: File;
+    }[]
+  >([]);
 
-  interface FileChunks {
-    [key: string]: {
-      name: string;
-      chunks: Uint8Array[];
-      size: number;
-      startedAt: number;
-      path?: string;
-    };
-  }
+  async function sendFiles() {
+    if (selectedFiles.value.length === 0 || recipientIds.value.size === 0)
+      return;
 
-  const fileChunks = useRef<FileChunks>({});
-  const speedCalculations = useRef<{
-    [key: string]: { lastTime: number; lastLoaded: number };
-  }>({});
-
-  interface User {
-    id: string;
-    socketId: string;
-  }
-  const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    const onConnect = () => {
-      console.log("✅ Connected:", socket.id);
-      setIsConnected(true);
-      socket.emit("register", { userId: socket.id });
-      if (socket.id) setuserid(socket.id);
-    };
-
-    const onDisconnect = () => {
-      console.log("❌ Disconnected");
-      setIsConnected(false);
-    };
-
-    const onFileStart = ({
-      fileId,
-      name,
-      size,
-      path,
-    }: {
-      fileId: string;
-      name: string;
-      size: number;
-      path?: string;
-    }) => {
-      console.log(`📂 Receiving file: ${path ? path + "/" : ""}${name}`);
-      fileChunks.current[fileId] = {
-        name,
-        chunks: [],
-        size: size || 0, 
-        startedAt: Date.now(),
-        path,
-      };
-      speedCalculations.current[fileId] = {
-        lastTime: Date.now(),
-        lastLoaded: 0,
-      };
-    };
-
-    const onFileChunk = ({
-      fileId,
-      chunk,
-      index,
-      totalChunks,
-    }: {
-      fileId: string;
-      chunk: ArrayBuffer;
-      index: number;
-      totalChunks: number;
-    }) => {
-      if (!fileChunks.current[fileId]) return;
-
-      fileChunks.current[fileId].chunks[index] = new Uint8Array(chunk);
-      const receivedChunks =
-        fileChunks.current[fileId].chunks.filter(Boolean).length;
-
-      // Calculate transfer speed
-      const now = Date.now();
-      const loaded =
-        (receivedChunks / totalChunks) * fileChunks.current[fileId].size;
-      const speedData = speedCalculations.current[fileId];
-
-      if (speedData && now > speedData.lastTime) {
-        const timeDiff = (now - speedData.lastTime) / 1000; // in seconds
-        const loadedDiff = loaded - speedData.lastLoaded;
-        const speed = loadedDiff / timeDiff; // bytes per second
-
-        setTransferSpeed((prev) => ({
-          ...prev,
-          [fileId]: formatSpeed(speed),
-        }));
-
-        speedData.lastTime = now;
-        speedData.lastLoaded = loaded;
-      }
-
-      setProgress((prev) => ({
-        ...prev,
-        [fileId]: (receivedChunks / totalChunks) * 100,
-      }));
-    };
-
-    const onFileEnd = ({ fileId }: { fileId: string }) => {
-      const {
-        name,
-        chunks,
-        size: originalSize,
-        path,
-      } = fileChunks.current[fileId];
-      const blob = new Blob(chunks);
-      const url = URL.createObjectURL(blob);
-
-      // Use blob.size as fallback if originalSize is not valid
-      const finalSize =
-        originalSize && !isNaN(originalSize) ? originalSize : blob.size;
-
-      setReceivedFiles((prev) => [
-        ...prev,
-        {
-          name,
-          file: url,
-          size: finalSize,
-          path,
-          receivedAt: new Date(),
-        },
-      ]);
-
-      setProgress((prev) => {
-        const newProgress = { ...prev };
-        delete newProgress[fileId];
-        return newProgress;
-      });
-
-      setTransferSpeed((prev) => {
-        const newSpeeds = { ...prev };
-        delete newSpeeds[fileId];
-        return newSpeeds;
-      });
-
-      delete fileChunks.current[fileId];
-      delete speedCalculations.current[fileId];
-
-      console.log(`✅ File received: ${path ? path + "/" : ""}${name}`);
-    };
-
-    const onUsersList = (users: User[]) => {
-      console.log("📋 Received users list:", users);
-      setConnectedUsers(users);
-    };
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("file-start", onFileStart);
-    socket.on("file-chunk", onFileChunk);
-    socket.on("file-end", onFileEnd);
-    socket.on("users-list", onUsersList);
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("file-start", onFileStart);
-      socket.off("file-chunk", onFileChunk);
-      socket.off("file-end", onFileEnd);
-      socket.off("users-list", onUsersList);
-    };
-  }, []);
-
-  const formatSpeed = (bytesPerSecond: number) => {
-    if (bytesPerSecond < 1024) return `${bytesPerSecond.toFixed(0)} B/s`;
-    if (bytesPerSecond < 1024 * 1024)
-      return `${(bytesPerSecond / 1024).toFixed(1)} KB/s`;
-    return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (isNaN(bytes)) return "0 B";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024)
-      return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const toggleRecipient = (userId: string) => {
-    setRecipientIds((prev) =>
-      prev.includes(userId) ?
-        prev.filter((id) => id !== userId)
-      : [...prev, userId],
+    await Promise.all(
+      selectedFiles.value.map(async (file) => api.upload.post(file)),
     );
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files).map((file) => ({
-        file,
-        path: file.name,
-        relativePath: file.name,
-      }));
-      setSelectedFiles((prev) => [...prev, ...newFiles]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-
-  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = e.target.files;
-      const newFiles: SelectedFile[] = [];
-
-      const basePath = files[0].webkitRelativePath
-        .split("/")
-        .slice(0, -1)
-        .join("/");
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const fullPath = file.webkitRelativePath;
-        const relativePath =
-          basePath ? fullPath.replace(`${basePath}/`, "") : fullPath;
-
-        newFiles.push({
-          file,
-          path: fullPath,
-          relativePath,
-        });
-      }
-
-      setSelectedFiles((prev) => [...prev, ...newFiles]);
-      if (folderInputRef.current) {
-        folderInputRef.current.value = "";
-      }
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const clearFiles = () => {
-    setSelectedFiles([]);
-  };
-
-  const sendFiles = async () => {
-    if (selectedFiles.length === 0 || recipientIds.length === 0) return;
-
-    setIsUploading(true);
-    setProgress({});
-    setTransferSpeed({});
-
-    const chunkSize = 256 * 1024; // 256KB chunks
-
-    try {
-      for (const recipientId of recipientIds) {
-        for (const { file, relativePath } of selectedFiles) {
-          const totalChunks = Math.ceil(file.size / chunkSize);
-          const fileId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-          const startTime = Date.now();
-
-          socket.emit("file-start", {
-            fileId,
-            name: file.name,
-            size: file.size,
-            path:
-              relativePath.includes("/") ?
-                relativePath.split("/").slice(0, -1).join("/")
-              : undefined,
-            recipientId,
-          });
-
-          for (let i = 0; i < totalChunks; i++) {
-            const start = i * chunkSize;
-            const chunk = file.slice(start, start + chunkSize);
-            const buffer = await chunk.arrayBuffer();
-
-            socket.emit("file-chunk", {
-              fileId,
-              chunk: buffer,
-              index: i,
-              totalChunks,
-              recipientId,
-            });
-
-            const currentTime = Date.now();
-            const timeElapsed = (currentTime - startTime) / 1000;
-            const bytesSent = (i + 1) * chunkSize;
-            const currentSpeed = bytesSent / timeElapsed;
-
-            setTransferSpeed((prev) => ({
-              ...prev,
-              [fileId]: formatSpeed(currentSpeed),
-            }));
-
-            await new Promise((resolve) => setTimeout(resolve, 5));
-
-            setProgress((prev) => ({
-              ...prev,
-              [fileId]: ((i + 1) / totalChunks) * 100,
-            }));
-          }
-
-          socket.emit("file-end", {
-            fileId,
-            name: file.name,
-            path:
-              relativePath.includes("/") ?
-                relativePath.split("/").slice(0, -1).join("/")
-              : undefined,
-            recipientId,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error during file transfer:", error);
-    } finally {
-      setIsUploading(false);
-      setSelectedFiles([]);
-    }
-  };
-
-  const downloadAllFiles = async () => {
-    if (receivedFiles.length === 0) return;
-
-    const zip = new JSZip();
-    const folderStructure: Record<string, JSZip> = {};
-
-    for (const file of receivedFiles) {
-      const path = file.path || "";
-      let currentFolder = zip;
-
-      if (path) {
-        const pathParts = path.split("/");
-        let currentPath = "";
-
-        for (const part of pathParts) {
-          currentPath = currentPath ? `${currentPath}/${part}` : part;
-
-          if (!folderStructure[currentPath]) {
-            folderStructure[currentPath] = currentFolder.folder(part) as JSZip;
-          }
-          currentFolder = folderStructure[currentPath];
-        }
-      }
-
-      const response = await fetch(file.file);
-      const blob = await response.blob();
-      currentFolder.file(file.name, blob);
-    }
-
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, "received_files.zip");
-  };
-
-  const downloadFolder = async (folderPath: string) => {
-    const folderFiles = receivedFiles.filter(
-      (file) => file.path === folderPath,
-    );
-    if (folderFiles.length === 0) return;
-
-    const zip = new JSZip();
-
-    for (const file of folderFiles) {
-      const response = await fetch(file.file);
-      const blob = await response.blob();
-      zip.file(file.name, blob);
-    }
-
-    const folderName = folderPath.split("/").pop() || "folder";
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, `${folderName}.zip`);
-  };
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
@@ -434,24 +49,18 @@ export default function Home() {
               Status: {isConnected ? "Connected" : "Disconnected"}
             </span>
           </div>
-          <div className="flex items-center">
-            <RefreshCw
-              className="mr-2 h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
-              onClick={() => socket.connect()}
-            />
-          </div>
         </div>
 
-        {userid && (
+        {state && (
           <div className="mt-4 flex items-center justify-between rounded bg-zinc-100 p-3 dark:bg-zinc-800">
             <div className="flex-1 truncate">
               <span className="block text-sm text-zinc-500 dark:text-zinc-400">
                 Your ID:
               </span>
-              <span className="font-mono text-sm">{userid}</span>
+              <span className="font-mono text-sm">{state.id}</span>
             </div>
             <button
-              onClick={() => copyToClipboard(userid)}
+              onClick={() => copyToClipboard(state.id)}
               className="ml-2 rounded-full p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               aria-label="Copy ID"
             >
@@ -463,8 +72,8 @@ export default function Home() {
 
       <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
         <DeviceRadar
-          devices={connectedUsers
-            .filter((user) => user.id !== userid)
+          devices={(state?.users || [])
+            .filter((user) => user.id !== state?.id)
             .map((user) => ({
               id: user.id,
               name: user.id.slice(0, 8) + "...",
@@ -472,8 +81,16 @@ export default function Home() {
               avatar: "/placeholder.svg?height=40&width=40",
               online: true,
             }))}
-          selectedIds={recipientIds}
-          onDeviceClick={(device) => toggleRecipient(device.id)}
+          selectedIds={recipientIds.value}
+          onDeviceClick={(device) => {
+            if (recipientIds.value.has(device.id)) {
+              recipientIds.value.delete(device.id);
+              recipientIds.value = new Set(recipientIds.value);
+            } else {
+              recipientIds.value.add(device.id);
+              recipientIds.value = new Set(recipientIds.value);
+            }
+          }}
         />
       </div>
 
@@ -491,8 +108,16 @@ export default function Home() {
                 <input
                   type="file"
                   multiple
-                  onChange={handleFileChange}
-                  ref={fileInputRef}
+                  onChange={(ev) => {
+                    if (ev.target.files) {
+                      selectedFiles.value = Array.from(ev.target.files).map(
+                        (file) => ({
+                          file,
+                          relativePath: file.webkitRelativePath,
+                        }),
+                      );
+                    }
+                  }}
                   className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
                 />
               </div>
@@ -506,31 +131,35 @@ export default function Home() {
                   type="file"
                   // @ts-expect-error - webkitdirectory is not in the type definitions
                   webkitdirectory=""
-                  onChange={handleFolderChange}
-                  ref={folderInputRef}
+                  // TODO: implement folder selection
+                  // onChange={handleFolderChange}
+                  // ref={folderInputRef}
                   className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
                 />
               </div>
             </div>
           </div>
 
-          {selectedFiles.length > 0 && (
+          {selectedFiles.value.length > 0 && (
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {selectedFiles.length} item(s) selected
+                  {selectedFiles.value.length} item
+                  {selectedFiles.value.length > 1 ? "s" : ""} selected
                 </span>
                 <button
-                  onClick={clearFiles}
+                  onClick={() => {
+                    selectedFiles.value = [];
+                  }}
                   className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400"
                 >
                   Clear all
                 </button>
               </div>
               <div className="max-h-60 overflow-y-auto rounded-lg border">
-                {selectedFiles.map((item, index) => (
+                {selectedFiles.value.map((item) => (
                   <div
-                    key={index}
+                    key={item.relativePath}
                     className="flex items-center justify-between border-b p-2 last:border-b-0 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
                     <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
@@ -558,7 +187,11 @@ export default function Home() {
                       </div>
                     </div>
                     <button
-                      onClick={() => removeFile(index)}
+                      onClick={() => {
+                        selectedFiles.value = selectedFiles.value.filter(
+                          (file) => file.relativePath !== item.relativePath,
+                        );
+                      }}
                       className="rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
                       aria-label="Remove file"
                     >
@@ -570,20 +203,26 @@ export default function Home() {
             </div>
           )}
 
-          {recipientIds.length > 0 && (
+          {recipientIds.value.size > 0 && (
             <div className="mt-3">
               <label className="mb-1 block text-sm font-medium">
-                Selected Recipients ({recipientIds.length})
+                Selected Recipient
+                {recipientIds.value.size < 1 ?
+                  ""
+                : `s (${recipientIds.value.size})`}
               </label>
               <div className="flex flex-wrap gap-2">
-                {recipientIds.map((id) => (
+                {recipientIds.value.values().map((id) => (
                   <div
                     key={id}
                     className="flex items-center rounded-full bg-zinc-100 px-3 py-1 text-sm dark:bg-zinc-800"
                   >
                     <span className="mr-2">{id.slice(0, 8)}...</span>
                     <button
-                      onClick={() => toggleRecipient(id)}
+                      onClick={() => {
+                        recipientIds.value.delete(id);
+                        recipientIds.value = new Set(recipientIds.value);
+                      }}
                       className="rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
                       aria-label="Remove recipient"
                     >
@@ -611,14 +250,15 @@ export default function Home() {
               </>
             : <>
                 <ArrowUpFromLine className="mr-2 h-4 w-4" />
-                Send to {recipientIds.length} recipient(s)
+                Send to {recipientIds.value.size} recipient
+                {recipientIds.value.size > 1 ? "s" : ""}
               </>
             }
           </button>
         </div>
 
         {/* Progress Bars */}
-        {isUploading && Object.keys(progress).length > 0 && (
+        {/* isUploading && Object.keys(progress).length > 0 && (
           <div className="mt-4 space-y-4">
             {Object.entries(progress).map(([fileId, fileProgress]) => {
               const fileData = fileChunks.current[fileId];
@@ -648,11 +288,11 @@ export default function Home() {
               );
             })}
           </div>
-        )}
+        ) */}
       </div>
 
       {/* Received Files Section */}
-      {receivedFiles.length > 0 && (
+      {/* receivedFiles.length > 0 && (
         <div className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-xl font-semibold">Received Files</h2>
@@ -670,7 +310,7 @@ export default function Home() {
             </div>
           </div>
           <div className="space-y-3">
-            {/* Group files by folder */}
+            {// Group files by folder}
             {(() => {
               const folders: Record<string, ReceivedFile[]> = {};
               const rootFiles: ReceivedFile[] = [];
@@ -688,7 +328,7 @@ export default function Home() {
 
               return (
                 <>
-                  {/* Display folders first */}
+                  {// Display folders first}
                   {Object.entries(folders).map(([path, files]) => (
                     <div
                       key={path}
@@ -730,7 +370,7 @@ export default function Home() {
                     </div>
                   ))}
 
-                  {/* Display root files */}
+                  {// Display root files }
                   {rootFiles.map((file, index) => (
                     <div
                       key={index}
@@ -759,7 +399,7 @@ export default function Home() {
             })()}
           </div>
         </div>
-      )}
+      ) */}
     </main>
   );
 }

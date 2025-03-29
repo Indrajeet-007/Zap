@@ -13,7 +13,7 @@ export interface Device {
 
 interface DeviceRadarProps {
   devices: Device[];
-  selectedIds?: string[]; // Changed from selectedId to selectedIds
+  selectedIds: Set<string>;
   onDeviceClick?: (device: Device) => void;
 }
 
@@ -108,7 +108,7 @@ function DeviceItem({
 
 export default function DeviceRadar({
   devices,
-  selectedIds = [], // Default to empty array
+  selectedIds,
   onDeviceClick,
 }: DeviceRadarProps) {
   const [positions, setPositions] = useState<
@@ -175,7 +175,7 @@ export default function DeviceRadar({
             key={device.id}
             device={device}
             position={positions[device.id] || { x: 0, y: 0 }}
-            isSelected={selectedIds.includes(device.id)} // Check if device is in selectedIds
+            isSelected={selectedIds.has(device.id)} // Check if device is in selectedIds
             onClick={onDeviceClick}
           />
         ))}
