@@ -4,7 +4,19 @@ import { Server } from "socket.io";
 
 const app = express();
 const server = http.createServer(app);
-const users = {};
+const users: Record<
+  string,
+  {
+    socketId: string;
+    isMobile: boolean;
+  }
+> = {};
+
+function isMobile(userAgent: string) {
+  const regex =
+    /Mobi|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return regex.test(userAgent);
+}
 
 const io = new Server(server, {
   cors: {
@@ -25,12 +37,21 @@ const io = new Server(server, {
 });
 
 // Track file transfer progress
-const fileTransfers = {};
+const fileTransfers: Record<
+  string,
+  {
+    name: string;
+    path: string;
+    chunksReceived: number;
+    startedAt: number;
+    size: number;
+  }
+> = {};
 
 const broadcastUsers = () => {
   const usersList = Object.keys(users).map((userId) => ({
     id: userId,
-    socketId: users[userId],
+    ...users[userId],
   }));
 
   io.emit("users-list", usersList);
@@ -46,10 +67,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("register", ({ userId }) => {
-    if (Object.values(users).find((socketId) => socketId === socket.id)) {
+    if (Object.values(users).find((user) => user.socketId === socket.id)) {
       return;
     }
-    users[userId] = socket.id;
+    users[userId] = {
+      socketId: socket.id,
+      isMobile: isMobile(socket.request.headers["user-agent"] || ""),
+    };
     socket.join(userId);
     console.log(`👤 User ${userId} registered with socket ${socket.id}`);
     broadcastUsers();
@@ -70,7 +94,7 @@ io.on("connection", (socket) => {
         chunksReceived: 0,
       };
 
-      io.to(users[recipientId]).emit("file-start", {
+      io.to(users[recipientId].socketId).emit("file-start", {
         fileId,
         name,
         size,
@@ -93,7 +117,7 @@ io.on("connection", (socket) => {
       }
 
       if (users[recipientId]) {
-        io.to(users[recipientId]).emit(
+        io.to(users[recipientId].socketId).emit(
           "file-chunk",
           {
             fileId,
@@ -120,7 +144,7 @@ io.on("connection", (socket) => {
     console.log(`✅ File transfer completed: ${name} -> ${recipientId}`);
 
     if (users[recipientId]) {
-      io.to(users[recipientId]).emit("file-end", { fileId, name });
+      io.to(users[recipientId].socketId).emit("file-end", { fileId, name });
     } else {
       console.log(`⚠️ No recipient found for file ${name}`);
     }
@@ -140,16 +164,17 @@ io.on("connection", (socket) => {
   socket.on("disconnect", (reason) => {
     console.log(`❌ Client disconnected: ${socket.id} (${reason})`);
 
+    // This does not work ???
     // Clean up any ongoing transfers for this socket
-    Object.entries(fileTransfers).forEach(([fileId, transfer]) => {
-      if (transfer.socketId === socket.id) {
-        delete fileTransfers[fileId];
-      }
-    });
+    // Object.entries(fileTransfers).forEach(([fileId, transfer]) => {
+    //   if (transfer.socketId === socket.id) {
+    //     delete fileTransfers[fileId];
+    //   }
+    // });
 
     // Remove user from tracking
     for (const userId in users) {
-      if (users[userId] === socket.id) {
+      if (users[userId].socketId === socket.id) {
         delete users[userId];
         console.log(`🗑️ Removed ${userId} from tracking`);
         broadcastUsers();
@@ -173,7 +198,7 @@ io.on("connection", (socket) => {
 });
 
 // Helper function
-function formatBytes(bytes) {
+function formatBytes(bytes: number) {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];

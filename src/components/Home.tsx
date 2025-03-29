@@ -68,6 +68,7 @@ export default function Home() {
   interface User {
     id: string;
     socketId: string;
+    isMobile: boolean;
   }
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
 
@@ -541,7 +542,7 @@ export default function Home() {
             .map((user) => ({
               id: user.id,
               name: user.id.slice(0, 8) + "...",
-              type: "desktop",
+              type: user.isMobile ? "phone" : "desktop",
               avatar: "/placeholder.svg?height=40&width=40",
               online: true,
             }))}
