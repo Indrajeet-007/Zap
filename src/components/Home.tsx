@@ -1,5 +1,6 @@
-// Home.tsx
-
+import { QrCodeIcon } from "@heroicons/react/24/outline";
+import { saveAs } from "file-saver";
+import JSZip from "jszip";
 import {
   ArrowUpFromLine,
   CheckCircle,
@@ -16,9 +17,6 @@ import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-import { QrCodeIcon } from "@heroicons/react/24/outline";
 
 const connectURL = import.meta.env.VITE_CONNECT_URL;
 
@@ -88,6 +86,14 @@ export default function Home() {
     isMobile: boolean;
   }
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    if (userid || isConnected || !socket.id) return;
+    console.log("✅ Registered:", socket.id);
+    setIsConnected(true);
+    socket.emit("register", { userId: socket.id });
+    if (socket.id) setuserid(socket.id);
+  }, [userid, isConnected]);
 
   useEffect(() => {
     const savedLogs = localStorage.getItem("fileTransferLogs");
