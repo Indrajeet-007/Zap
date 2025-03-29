@@ -61,7 +61,7 @@ export default function Home() {
   const [transferSpeed, setTransferSpeed] = useState<{ [key: string]: string }>(
     {},
   );
-  const [showQrCode, setShowQrCode] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(true);
   const [showCopied, setShowCopied] = useState(false);
   const [transferLogs, setTransferLogs] = useState<TransferLog[]>([]);
   const [showLogs, setShowLogs] = useState(false);
@@ -669,7 +669,7 @@ export default function Home() {
               onClick={() => setShowLogs(true)}
               className="flex w-full items-center justify-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 sm:w-auto dark:bg-zinc-800 dark:hover:bg-zinc-700"
             >
-              <span>View History</span>
+              <span>History</span>
               {transferLogs.length > 0 && (
                 <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-700">
                   {transferLogs.length}
@@ -1055,9 +1055,9 @@ export default function Home() {
               {rootFiles.map((file, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-start rounded-md bg-zinc-100 p-4 sm:flex-row sm:items-center dark:bg-zinc-800"
+                  className="flex flex-col rounded-md items-center bg-zinc-100 p-4 sm:flex-row dark:bg-zinc-800"
                 >
-                  <div className="mb-2 flex items-center sm:mb-0">
+                  <div className="mb-2 flex grow items-center sm:mb-0">
                     <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
                     <div className="min-w-0">
                       <p className="max-w-[200px] truncate font-medium sm:max-w-none">
