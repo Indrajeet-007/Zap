@@ -13,7 +13,7 @@ export interface Device {
 
 interface DeviceRadarProps {
   devices: Device[];
-  selectedId?: string;
+  selectedIds?: string[]; // Changed from selectedId to selectedIds
   onDeviceClick?: (device: Device) => void;
 }
 
@@ -24,14 +24,12 @@ interface DeviceItemProps {
   onClick?: (device: Device) => void;
 }
 
-// DeviceItem handles the rendering of a single device on the radar
 function DeviceItem({
   device,
   position,
   isSelected,
   onClick,
 }: DeviceItemProps) {
-  // Function to get icon based on device type
   const getDeviceIcon = (type: string) => {
     switch (type) {
       case "laptop":
@@ -73,11 +71,15 @@ function DeviceItem({
           <Avatar
             className={`h-12 w-12 border-2 ${
               device.online ? "border-green-500" : "border-gray-300"
-            }`}
+            } ${isSelected ? "ring-2 ring-blue-500" : ""}`} // Added ring for selected state
           >
             <AvatarImage src={device.avatar} alt={device.name} />
             <AvatarFallback
-              className={`${isSelected ? "bg-green-500 text-gray-50" : "bg-gray-200 text-gray-800"} `}
+              className={`${
+                isSelected ? "bg-blue-500 text-white"
+                : device.online ? "bg-green-100 text-gray-800"
+                : "bg-gray-200 text-gray-800"
+              }`}
             >
               {getDeviceIcon(device.type)}
             </AvatarFallback>
@@ -106,22 +108,19 @@ function DeviceItem({
 
 export default function DeviceRadar({
   devices,
-  selectedId,
+  selectedIds = [], // Default to empty array
   onDeviceClick,
 }: DeviceRadarProps) {
-  // Store positions mapping: id -> { x, y }
   const [positions, setPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
 
-  // Calculate and update positions mapping with slight random offset for animation
   useEffect(() => {
     const updatePositions = () => {
       const newPositions: Record<string, { x: number; y: number }> = {};
       devices.forEach((device, index) => {
         const angle = (index / devices.length) * 2 * Math.PI;
         const radius = 150;
-        // Base position on circle plus a small random offset between -5 and 5
         const baseX = Math.cos(angle) * radius;
         const baseY = Math.sin(angle) * radius;
         newPositions[device.id] = {
@@ -132,9 +131,8 @@ export default function DeviceRadar({
       setPositions(newPositions);
     };
 
-    // Initialize positions
     updatePositions();
-    const interval = setInterval(updatePositions, 1000); // Update positions every second
+    const interval = setInterval(updatePositions, 1000);
 
     return () => clearInterval(interval);
   }, [devices]);
@@ -149,15 +147,11 @@ export default function DeviceRadar({
       </div>
 
       <div className="relative h-[400px] w-[400px]">
-        {/* Radar background */}
         <div className="absolute inset-0 rounded-full border border-gray-300 bg-gray-200/50 backdrop-blur-sm"></div>
-
-        {/* Radar grid lines */}
         <div className="absolute inset-0 rounded-full border border-gray-300"></div>
         <div className="absolute inset-[25%] rounded-full border border-gray-300"></div>
         <div className="absolute inset-[50%] rounded-full border border-gray-300"></div>
 
-        {/* Radar scan animation */}
         <div className="absolute inset-0 overflow-hidden rounded-full">
           <motion.div
             className="absolute top-0 left-0 h-full w-full origin-center"
@@ -174,16 +168,14 @@ export default function DeviceRadar({
           />
         </div>
 
-        {/* Center dot */}
         <div className="absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500"></div>
 
-        {/* Devices */}
         {devices.map((device) => (
           <DeviceItem
             key={device.id}
             device={device}
             position={positions[device.id] || { x: 0, y: 0 }}
-            isSelected={selectedId === device.id}
+            isSelected={selectedIds.includes(device.id)} // Check if device is in selectedIds
             onClick={onDeviceClick}
           />
         ))}

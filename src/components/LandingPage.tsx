@@ -15,7 +15,7 @@ export default function LandingPage() {
   return (
     <div className="bg-background relative flex h-[500px] w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-none">
       <span className="pointer-events-none bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-8xl leading-none font-semibold whitespace-pre-wrap text-transparent dark:from-white dark:to-slate-900/10">
-        SwiftShare
+        Zap
       </span>
       <Particles
         className="absolute inset-0 z-0"
@@ -33,7 +33,8 @@ export default function LandingPage() {
             delay={0}
             className="py-4 text-xl text-stone-800"
           >
-            Transfer files in a flash with SwiftShare — no cables, no cloud, just speed.
+            Transfer files in a flash with Zap — no cables, no cloud, just
+            speed.
           </TextAnimate>
         </div>
 

@@ -9,12 +9,12 @@ export default function NavBar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-md">
             <img
               src={croplogo || "/placeholder.svg"}
-              alt="SwiftShare logo"
+              alt="Zap logo"
               className="h-8 w-8"
             />
           </span>
           <span className="text-lg font-semibold text-neutral-800">
-            SwiftShare
+            Zap
           </span>
         </div>
       </Link>
