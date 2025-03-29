@@ -764,7 +764,7 @@ export default function Home() {
               type: user.isMobile ? "phone" : "desktop",
               avatar: "/placeholder.svg?height=40&width=40",
               online: true,
-              isNew:
+              isSuggested:
                 localStorage.getItem(
                   JSON.stringify({
                     type: "knownRecipient",
