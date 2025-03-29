@@ -70,14 +70,14 @@ function DeviceItem({
         <motion.div whileHover={{ scale: 1.1 }} className="relative">
           <Avatar
             className={`h-12 w-12 border-2 ${
-              device.online ? "border-green-500" : "border-gray-300"
+              device.online ? "border-blue-500" : "border-gray-300"
             } ${isSelected ? "ring-2 ring-blue-500" : ""}`} // Added ring for selected state
           >
             <AvatarImage src={device.avatar} alt={device.name} />
             <AvatarFallback
               className={`${
                 isSelected ? "bg-blue-500 text-white"
-                : device.online ? "bg-green-100 text-gray-800"
+                : device.online ? "bg-blue-100 text-gray-800"
                 : "bg-gray-200 text-gray-800"
               }`}
             >
@@ -86,7 +86,7 @@ function DeviceItem({
           </Avatar>
           {device.online && (
             <motion.div
-              className="absolute -inset-1 rounded-full border border-green-500/50"
+              className="absolute -inset-1 rounded-full border border-blue-500/50"
               animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
               transition={{
                 duration: 2,
@@ -157,7 +157,7 @@ export default function DeviceRadar({
             className="absolute top-0 left-0 h-full w-full origin-center"
             style={{
               background:
-                "conic-gradient(from 0deg, transparent 0deg, rgba(74, 222, 128, 0.5) 0deg, rgba(74, 222, 128, 0.5) 120deg, transparent 120deg)",
+                "conic-gradient(from 0deg, transparent 0deg, rgba(132, 183, 255, 0.35) 0deg, rgba(132, 183, 255, 0.35) 120deg, transparent 120deg)",
             }}
             animate={{ rotate: 360 }}
             transition={{
@@ -168,7 +168,7 @@ export default function DeviceRadar({
           />
         </div>
 
-        <div className="absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-green-500"></div>
+        <div className="absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500"></div>
 
         {devices.map((device) => (
           <DeviceItem
