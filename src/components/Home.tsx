@@ -1,26 +1,17 @@
-import { QrCodeIcon } from "@heroicons/react/24/outline";
 import { saveAs } from "file-saver";
 import JSZip from "jszip";
-import {
-  AlertCircle,
-  ArrowDown,
-  ArrowUpFromLine,
-  CheckCircle,
-  Clock,
-  Copy,
-  FileIcon,
-  FolderIcon,
-  Loader2,
-  RefreshCw,
-  Wifi,
-  WifiOff,
-  X,
-} from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
+import { ArrowUpFromLine, Copy, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../lib/socket";
-import { cn } from "../lib/utils";
-import DeviceRadar from "./DeviceRadar";
+import { ConnectionStatus } from "./ConnectionStatus";
+import { DeviceConnection } from "./DeviceConnection";
+import { DeviceRadarWrapper } from "./DeviceRadarWrapper";
+import { FileInputs } from "./FileInputs";
+import { FileList } from "./FileList";
+import { ProgressBars } from "./ProgressBars";
+import { ReceivedFiles } from "./ReceivedFiles";
+import { RecipientList } from "./RecipientList";
+import { TransferLogPanel } from "./TransferLogPanel";
 const connectURL = import.meta.env.VITE_CONNECT_URL;
 
 interface TransferLog {
@@ -65,8 +56,8 @@ export default function Home() {
   const [showCopied, setShowCopied] = useState(false);
   const [transferLogs, setTransferLogs] = useState<TransferLog[]>([]);
   const [showLogs, setShowLogs] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
 
   interface FileChunks {
     [key: string]: {
@@ -550,182 +541,25 @@ export default function Home() {
     saveAs(content, `${folderName}.zip`);
   };
 
-  const TransferLogPanel = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl transition-all dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold tracking-tight">
-              File Transfer History
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={clearTransferLogs}
-                className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                Clear History
-              </button>
-              <button
-                onClick={() => setShowLogs(false)}
-                className="rounded-full p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-h-[70vh] overflow-y-auto">
-          {transferLogs.length === 0 ?
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-zinc-500 dark:text-zinc-400">
-                No transfer history yet
-              </p>
-            </div>
-          : <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {transferLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className={cn(
-                    "p-4 text-sm transition-colors",
-                    log.status === "failed" && "bg-zinc-50 dark:bg-zinc-900",
-                    log.status === "in-progress" &&
-                      "bg-zinc-50 dark:bg-zinc-900",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700">
-                          {log.type === "sent" ?
-                            <ArrowUpFromLine className="h-4 w-4" />
-                          : <ArrowDown className="h-4 w-4" />}
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <div className="font-medium">
-                            {log.path ? `${log.path}/` : ""}
-                            {log.fileName}
-                          </div>
-                          <div className="mt-0.5 flex text-xs text-zinc-500 dark:text-zinc-400">
-                            {log.fileSize} •{" "}
-                            {log.type === "sent" ? "Sent to" : "Received from"}
-                            {log.recipients ?
-                              ` ${log.recipients.length} recipient(s)`
-                            : ""}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <div className="flex items-center gap-1.5">
-                        {log.status === "completed" ?
-                          <CheckCircle className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
-                        : log.status === "failed" ?
-                          <AlertCircle className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
-                        : <Clock className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
-                        }
-                        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                          {log.status}
-                        </span>
-                      </div>
-                      <span className="mt-2 text-xs text-zinc-400">
-                        {log.timestamp.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
       {/* Connection Status - Responsive layout */}
       <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 dark:border-zinc-800">
-        <div className="flex flex-col items-start justify-between p-2 sm:flex-row sm:items-center">
-          <div className="mb-2 flex items-center space-x-2 sm:mb-0">
-            {isConnected ?
-              <Wifi className="h-5 w-5 text-green-600 dark:text-green-500" />
-            : <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />}
-            <span className="font-medium">
-              Status: {isConnected ? "Connected" : "Disconnected"}
-            </span>
-          </div>
-          <div className="flex w-full items-center space-x-2 sm:w-auto">
-            <button
-              onClick={() => setShowLogs(true)}
-              className="flex w-full items-center justify-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 sm:w-auto dark:bg-zinc-800 dark:hover:bg-zinc-700"
-            >
-              <span>View History</span>
-              {transferLogs.length > 0 && (
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-700">
-                  {transferLogs.length}
-                </span>
-              )}
-            </button>
-            <RefreshCw
-              className="h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
-              onClick={() => window.location.reload()}
-            />
-          </div>
-        </div>
+        <ConnectionStatus
+          isConnected={isConnected}
+          transferLogs={transferLogs}
+          setShowLogs={setShowLogs}
+        />
 
         {isConnected && (
-          <div className="mb-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="mb-2 text-sm font-medium sm:mb-0">
-                Device Connection
-              </h3>
-              <button
-                onClick={() => setShowQrCode(!showQrCode)}
-                className="flex w-full items-center justify-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 sm:w-auto dark:bg-zinc-800 dark:hover:bg-zinc-700"
-              >
-                <QrCodeIcon className="h-4 w-4" />
-                {showQrCode ? "Hide QR Code" : "Show QR Code"}
-              </button>
-            </div>
-
-            {showQrCode && (
-              <div className="mt-4 flex flex-col items-center">
-                <div className="mb-4 rounded-lg border-4 border-white bg-white p-2 dark:border-zinc-900 dark:bg-zinc-900">
-                  <QRCodeSVG
-                    value={`${connectURL}/home?connect=${userid}`}
-                    size={window.innerWidth < 400 ? 150 : 200}
-                    level="H"
-                    includeMargin={false}
-                    fgColor="currentColor"
-                    className="text-zinc-900 dark:text-zinc-100"
-                  />
-                </div>
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-                  Scan this code to connect to this device
-                  <br />
-                  <span className="mt-1 inline-block text-xs opacity-75">
-                    or share this ID: {userid.slice(0, 12)}...
-                  </span>
-                </p>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(userid);
-                    setShowCopied(true);
-                    setTimeout(() => setShowCopied(false), 2000);
-                  }}
-                  className="mt-2 flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  <Copy className="h-3 w-3" />
-                  {showCopied ? "Copied!" : "Copy ID"}
-                </button>
-              </div>
-            )}
-          </div>
+          <DeviceConnection
+            showQrCode={showQrCode}
+            setShowQrCode={setShowQrCode}
+            userid={userid}
+            showCopied={showCopied}
+            setShowCopied={setShowCopied}
+            connectURL={connectURL}
+          />
         )}
 
         {userid && (
@@ -755,25 +589,11 @@ export default function Home() {
 
       {/* Device Radar - Responsive sizing */}
       <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
-        <DeviceRadar
-          devices={connectedUsers
-            .filter((user) => user.id !== userid)
-            .map((user) => ({
-              id: user.id,
-              name: user.id.slice(0, 8) + "...",
-              type: user.isMobile ? "phone" : "desktop",
-              avatar: "/placeholder.svg?height=40&width=40",
-              online: true,
-              isSuggested:
-                localStorage.getItem(
-                  JSON.stringify({
-                    type: "knownRecipient",
-                    recipientId: user.id,
-                  }),
-                ) === "true",
-            }))}
-          selectedIds={recipientIds}
-          onDeviceClick={(device) => toggleRecipient(device.id)}
+        <DeviceRadarWrapper
+          connectedUsers={connectedUsers}
+          userid={userid}
+          recipientIds={recipientIds}
+          toggleRecipient={toggleRecipient}
         />
       </div>
 
@@ -784,118 +604,26 @@ export default function Home() {
         </h2>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Select Files
-              </label>
-              <div className="relative">
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  ref={fileInputRef}
-                  className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Select Folder
-              </label>
-              <div className="relative">
-                <input
-                  type="file"
-                  // @ts-expect-error - webkitdirectory is not in the type definitions
-                  webkitdirectory=""
-                  onChange={handleFolderChange}
-                  ref={folderInputRef}
-                  className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
-                />
-              </div>
-            </div>
-          </div>
+          <FileInputs
+            handleFileChange={handleFileChange}
+            fileInputRef={fileInputRef}
+            handleFolderChange={handleFolderChange}
+            folderInputRef={folderInputRef}
+          />
 
           {selectedFiles.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {selectedFiles.length} item(s) selected
-                </span>
-                <button
-                  onClick={clearFiles}
-                  className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400"
-                >
-                  Clear all
-                </button>
-              </div>
-              <div className="max-h-60 overflow-y-auto rounded-lg border">
-                {selectedFiles.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between border-b p-2 last:border-b-0 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  >
-                    <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
-                      {item.relativePath.includes("/") ?
-                        <FolderIcon className="mr-2 h-4 w-4 text-yellow-500" />
-                      : <FileIcon className="mr-2 h-4 w-4" />}
-                      <div className="min-w-0">
-                        <div className="truncate">
-                          {item.relativePath.includes("/") ?
-                            <>
-                              <span className="text-zinc-400 dark:text-zinc-500">
-                                {item.relativePath
-                                  .split("/")
-                                  .slice(0, -1)
-                                  .join("/")}
-                                /
-                              </span>
-                              <span>{item.file.name}</span>
-                            </>
-                          : item.file.name}
-                        </div>
-                        <div className="text-xs text-zinc-400 dark:text-zinc-500">
-                          {formatFileSize(item.file.size)}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFile(index)}
-                      className="rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
-                      aria-label="Remove file"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <FileList
+              selectedFiles={selectedFiles}
+              removeFile={removeFile}
+              clearFiles={clearFiles}
+              formatFileSize={formatFileSize}
+            />
           )}
 
-          {recipientIds.length > 0 && (
-            <div className="mt-3">
-              <label className="mb-1 block text-sm font-medium">
-                Selected Recipients ({recipientIds.length})
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {recipientIds.map((id) => (
-                  <div
-                    key={id}
-                    className="flex items-center rounded-full bg-zinc-100 px-3 py-1 text-sm dark:bg-zinc-800"
-                  >
-                    <span className="mr-2">{id.slice(0, 8)}...</span>
-                    <button
-                      onClick={() => toggleRecipient(id)}
-                      className="rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
-                      aria-label="Remove recipient"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <RecipientList
+            recipientIds={recipientIds}
+            toggleRecipient={toggleRecipient}
+          />
 
           <button
             onClick={sendFiles}
@@ -919,165 +647,28 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Progress Bars */}
-        {isUploading && Object.keys(progress).length > 0 && (
-          <div className="mt-4 space-y-4">
-            {Object.entries(progress).map(([fileId, fileProgress]) => {
-              const fileData = fileChunks.current[fileId];
-              const fileName = fileData?.name || "File";
-              const filePath = fileData?.path;
-              return (
-                <div key={fileId}>
-                  <div className="mb-1 flex justify-between">
-                    <p className="max-w-[70%] truncate text-sm text-zinc-600 dark:text-zinc-400">
-                      {filePath ? `${filePath}/` : ""}
-                      {fileName}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {transferSpeed[fileId] || "Calculating..."}
-                    </p>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                    <div
-                      className="h-2 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
-                      style={{ width: `${Math.round(fileProgress)}%` }}
-                    ></div>
-                  </div>
-                  <p className="mt-1 text-right text-xs text-zinc-500 dark:text-zinc-400">
-                    {Math.round(fileProgress)}% Uploaded
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <ProgressBars
+          isUploading={isUploading}
+          progress={progress}
+          fileChunks={fileChunks}
+          transferSpeed={transferSpeed}
+        />
       </div>
 
-      {/* Received Files Section - Responsive layout */}
-      {receivedFiles.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 p-4 md:p-6 dark:border-zinc-800">
-          <div className="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-            <h2 className="text-lg font-semibold md:text-xl">Received Files</h2>
-            <div className="mt-2 flex items-center space-x-2 sm:mt-0">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                {receivedFiles.length} item(s)
-              </span>
-              <button
-                onClick={downloadAllFiles}
-                className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                <ArrowDown className="mr-1 h-4 w-4" />
-                <span className="hidden sm:inline">Download All</span>
-                <span className="sm:hidden">All</span>
-              </button>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {/* Group files by folder */}
-            {(() => {
-              const folders: Record<string, ReceivedFile[]> = {};
-              const rootFiles: ReceivedFile[] = [];
+      <ReceivedFiles
+        receivedFiles={receivedFiles}
+        downloadAllFiles={downloadAllFiles}
+        downloadFolder={downloadFolder}
+        formatFileSize={formatFileSize}
+      />
 
-              receivedFiles.forEach((file) => {
-                if (file.path) {
-                  if (!folders[file.path]) {
-                    folders[file.path] = [];
-                  }
-                  folders[file.path].push(file);
-                } else {
-                  rootFiles.push(file);
-                }
-              });
-
-              return (
-                <>
-                  {/* Display folders first */}
-                  {Object.entries(folders).map(([path, files]) => (
-                    <div
-                      key={path}
-                      className="rounded-md bg-zinc-100 p-4 dark:bg-zinc-800"
-                    >
-                      <div className="mb-2 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-                        <div className="mb-2 flex items-center sm:mb-0">
-                          <FolderIcon className="mr-2 h-6 w-6 text-yellow-500" />
-                          <span className="max-w-[200px] truncate font-medium">
-                            {path}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => downloadFolder(path)}
-                          className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-                        >
-                          <ArrowUpFromLine className="mr-1 h-3 w-3" />
-                          <span className="hidden sm:inline">
-                            Download Folder
-                          </span>
-                          <span className="sm:hidden">Folder</span>
-                        </button>
-                      </div>
-                      <div className="ml-2 space-y-2 sm:ml-8">
-                        {files.map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between border-b py-2 last:border-b-0"
-                          >
-                            <div className="flex max-w-[70%] items-center">
-                              <FileIcon className="mr-2 h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-                              <span className="truncate">{file.name}</span>
-                            </div>
-                            <a
-                              href={file.file}
-                              download={file.name}
-                              className="text-sm whitespace-nowrap text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
-                            >
-                              Download
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Display root files */}
-                  {rootFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col items-start rounded-md bg-zinc-100 p-4 sm:flex-row sm:items-center dark:bg-zinc-800"
-                    >
-                      <div className="mb-2 flex items-center sm:mb-0">
-                        <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
-                        <div className="min-w-0">
-                          <p className="max-w-[200px] truncate font-medium sm:max-w-none">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {formatFileSize(file.size)} •{" "}
-                            {file.receivedAt.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <a
-                        href={file.file}
-                        download={file.name}
-                        className="mt-2 ml-auto inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 sm:mt-0 sm:ml-4 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-                      >
-                        <ArrowDown className="mr-1 h-4 w-4" />
-                        Download
-                      </a>
-                    </div>
-                  ))}
-                </>
-              );
-            })()}
-          </div>
-        </div>
+      {showLogs && (
+        <TransferLogPanel
+          transferLogs={transferLogs}
+          clearTransferLogs={clearTransferLogs}
+          setShowLogs={setShowLogs}
+        />
       )}
-
-      {/* Transfer Log Panel */}
-      {showLogs && <TransferLogPanel />}
     </main>
   );
 }
