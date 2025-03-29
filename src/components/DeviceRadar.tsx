@@ -77,7 +77,7 @@ const DeviceItem = ({
               transition={{ type: "spring", stiffness: 200, damping: 20 }}
               className="absolute -top-2 -right-2 z-10"
             >
-              <div className="relative">
+              <div className="relative flex-col">
                 <motion.div
                   initial={{ scale: 1, opacity: 0 }} // Start from invisible
                   animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
@@ -90,7 +90,7 @@ const DeviceItem = ({
                   className="absolute inset-0 -z-10 rounded-full bg-blue-500"
                 />
                 {/* Badge */}
-                <div className="relative flex items-center justify-center rounded-full bg-blue-500 text-[10px] font-medium text-white shadow-md">
+                <div className="relative flex p-1 items-center justify-center rounded-full bg-blue-500 text-[10px] font-medium text-white shadow-md">
                   Suggested
                 </div>
               </div>
