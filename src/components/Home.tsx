@@ -1,7 +1,5 @@
 // Home.tsx
-import { QrCodeIcon } from "@heroicons/react/24/outline";
-import { saveAs } from "file-saver";
-import JSZip from "jszip";
+
 import {
   ArrowUpFromLine,
   CheckCircle,
@@ -20,7 +18,6 @@ import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { QRCodeSVG } from "qrcode.react";
 import { QrCodeIcon } from "@heroicons/react/24/outline";
 
 const connectURL = import.meta.env.VITE_CONNECT_URL;

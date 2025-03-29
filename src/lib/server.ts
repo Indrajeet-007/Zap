@@ -117,19 +117,12 @@ io.on("connection", (socket) => {
       }
 
       if (users[recipientId]) {
-        io.to(users[recipientId].socketId).emit(
-          "file-chunk",
-          {
-            fileId,
-            chunk,
-            index,
-            totalChunks,
-          },
-          () => {
-            // Send acknowledgement back to sender
-            acknowledgement();
-          },
-        );
+        io.to(users[recipientId].socketId).emit("file-chunk", {
+          fileId,
+          chunk,
+          index,
+          totalChunks,
+        });
       } else {
         console.log(`⚠️ No recipient found for chunk ${index + 1}`);
         socket.emit("transfer-error", {
