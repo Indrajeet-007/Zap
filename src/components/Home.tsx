@@ -445,7 +445,6 @@ export default function Home() {
             }));
           }
 
-          const transferTime = (Date.now() - startTime) / 1000;
           socket.emit("file-end", {
             fileId,
             name: file.name,
