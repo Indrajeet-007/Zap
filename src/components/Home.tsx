@@ -72,12 +72,12 @@ export default function Home() {
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    if (userid) return;
+    if (userid || isConnected || !socket.id) return;
     console.log("✅ Registered:", socket.id);
     setIsConnected(true);
     socket.emit("register", { userId: socket.id });
     if (socket.id) setuserid(socket.id);
-  }, [userid]);
+  }, [userid, isConnected]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

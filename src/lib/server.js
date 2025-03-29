@@ -46,10 +46,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("register", ({ userId }) => {
+    if (Object.values(users).find((socketId) => socketId === socket.id)) {
+      return;
+    }
     users[userId] = socket.id;
     socket.join(userId);
     console.log(`👤 User ${userId} registered with socket ${socket.id}`);
     broadcastUsers();
+    console.log(users);
   });
 
   socket.on("file-start", ({ fileId, name, size, recipientId, path }) => {
