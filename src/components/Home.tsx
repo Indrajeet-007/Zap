@@ -16,7 +16,10 @@ import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { QRCodeSVG } from "qrcode.react";
+import { QrCodeIcon } from "@heroicons/react/24/outline";
 
+const connectURL = import.meta.env.VITE_CONNECT_URL
 interface ReceivedFile {
   name: string;
   file: string;
@@ -42,6 +45,8 @@ export default function Home() {
   const [transferSpeed, setTransferSpeed] = useState<{ [key: string]: string }>(
     {},
   );
+  const [showQrCode, setShowQrCode] = useState(false);
+  const [showCopied, setShowCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,6 +72,20 @@ export default function Home() {
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log(urlParams);
+    const connectTo = urlParams.get("connect");
+  
+    if (connectTo && connectTo !== userid) {
+      // Add to recipients if not already there 
+      if (!recipientIds.includes(connectTo)) {
+        setRecipientIds((prev) => [...prev, connectTo]);
+      }
+  
+      // Redirect to /home without parameters
+      window.history.replaceState(null, "", "/home");
+    }
+
     const onConnect = () => {
       console.log("✅ Connected:", socket.id);
       setIsConnected(true);
@@ -94,7 +113,7 @@ export default function Home() {
       fileChunks.current[fileId] = {
         name,
         chunks: [],
-        size: size || 0, 
+        size: size || 0, // Ensure size is always a number
         startedAt: Date.now(),
         path,
       };
@@ -210,7 +229,7 @@ export default function Home() {
       socket.off("file-end", onFileEnd);
       socket.off("users-list", onUsersList);
     };
-  }, []);
+  }, [userid]);
 
   const formatSpeed = (bytesPerSecond: number) => {
     if (bytesPerSecond < 1024) return `${bytesPerSecond.toFixed(0)} B/s`;
@@ -437,11 +456,57 @@ export default function Home() {
           <div className="flex items-center">
             <RefreshCw
               className="mr-2 h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
-              onClick={() => socket.connect()}
+              onClick={() => window.location.reload()}
             />
           </div>
         </div>
+        {isConnected && (
+          <div className="mb-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">Device Connection</h3>
+              <button
+                onClick={() => setShowQrCode(!showQrCode)}
+                className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+              >
+                <QrCodeIcon className="h-4 w-4" />
+                {showQrCode ? "Hide QR Code" : "Show QR Code"}
+              </button>
+            </div>
 
+            {showQrCode && (
+              <div className="mt-4 flex flex-col items-center">
+                <div className="mb-4 rounded-lg border-4 border-white bg-white p-2 dark:border-zinc-900 dark:bg-zinc-900">
+                  <QRCodeSVG
+                    value={`${connectURL}/home?connect=${userid}`}
+                    size={200}
+                    level="H"
+                    includeMargin={false}
+                    fgColor="currentColor"
+                    className="text-zinc-900 dark:text-zinc-100"
+                  />
+                </div>
+                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                  Scan this code to connect to this device
+                  <br />
+                  <span className="mt-1 inline-block text-xs opacity-75">
+                    or share this ID: {userid}
+                  </span>
+                </p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(userid);
+                    setShowCopied(true);
+                    setTimeout(() => setShowCopied(false), 2000);
+                  }}
+                  className="mt-2 flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <Copy className="h-3 w-3" />
+                  {showCopied ? "Copied!" : "Copy ID"}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {userid && (
           <div className="mt-4 flex items-center justify-between rounded bg-zinc-100 p-3 dark:bg-zinc-800">
             <div className="flex-1 truncate">
