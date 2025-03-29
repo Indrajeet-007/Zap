@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
-import { socket } from "../lib/socket";
+import $socket, { deviceId } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
 
 const connectURL = import.meta.env.VITE_CONNECT_URL;
@@ -47,14 +47,33 @@ interface SelectedFile {
   relativePath: string;
 }
 
+function base64ToArrayBuffer(base64: string): Uint8Array {
+  var binaryString = atob(base64);
+  var bytes = new Uint8Array(binaryString.length);
+  for (var i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  var binary = "";
+  var bytes = new Uint8Array(buffer);
+  var len = bytes.byteLength;
+  for (var i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 export default function Home() {
-  const [isConnected, setIsConnected] = useState(false);
+  const socket = $socket.value;
+  const isConnected = !!socket;
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [receivedFiles, setReceivedFiles] = useState<ReceivedFile[]>([]);
   const [progress, setProgress] = useState<{ [key: string]: number }>({});
   const [isUploading, setIsUploading] = useState(false);
   const [recipientIds, setRecipientIds] = useState<string[]>([]);
-  const [userid, setuserid] = useState("");
   const [transferSpeed, setTransferSpeed] = useState<{ [key: string]: string }>(
     {},
   );
@@ -81,19 +100,10 @@ export default function Home() {
   }>({});
 
   interface User {
-    id: string;
-    socketId: string;
+    deviceId: string;
     isMobile: boolean;
   }
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    if (userid || isConnected || !socket.id) return;
-    console.log("✅ Registered:", socket.id);
-    setIsConnected(true);
-    socket.emit("register", { userId: socket.id });
-    if (socket.id) setuserid(socket.id);
-  }, [userid, isConnected]);
 
   useEffect(() => {
     const savedLogs = localStorage.getItem("fileTransferLogs");
@@ -116,14 +126,6 @@ export default function Home() {
     }
   }, [transferLogs]);
 
-  // Clear logs when user ID changes
-  useEffect(() => {
-    if (userid) {
-      setTransferLogs([]);
-      localStorage.removeItem("fileTransferLogs");
-    }
-  }, [userid]);
-
   const clearTransferLogs = () => {
     setTransferLogs([]);
     localStorage.removeItem("fileTransferLogs");
@@ -142,22 +144,12 @@ export default function Home() {
     const urlParams = new URLSearchParams(window.location.search);
     const connectTo = urlParams.get("connect");
 
-    if (connectTo && connectTo !== userid) {
+    if (connectTo && connectTo !== deviceId) {
       if (!recipientIds.includes(connectTo)) {
         setRecipientIds((prev) => [...prev, connectTo]);
       }
       window.history.replaceState(null, "", "/home");
     }
-
-    const onConnect = () => {
-      setIsConnected(true);
-      socket.emit("register", { userId: socket.id });
-      if (socket.id) setuserid(socket.id);
-    };
-
-    const onDisconnect = () => {
-      setIsConnected(false);
-    };
 
     const onFileStart = ({
       fileId,
@@ -170,6 +162,9 @@ export default function Home() {
       size: number;
       path?: string;
     }) => {
+      console.log(
+        `file-start: ${fileId}, name: ${name}, size: ${size}, path: ${path}`,
+      );
       fileChunks.current[fileId] = {
         name,
         chunks: [],
@@ -190,13 +185,16 @@ export default function Home() {
       totalChunks,
     }: {
       fileId: string;
-      chunk: ArrayBuffer;
+      chunk: string;
       index: number;
       totalChunks: number;
     }) => {
+      console.log(
+        `file-chunk: ${fileId}, chunk: ${chunk}, index: ${index}, totalChunks: ${totalChunks}`,
+      );
       if (!fileChunks.current[fileId]) return;
 
-      fileChunks.current[fileId].chunks[index] = new Uint8Array(chunk);
+      fileChunks.current[fileId].chunks[index] = base64ToArrayBuffer(chunk);
       const receivedChunks =
         fileChunks.current[fileId].chunks.filter(Boolean).length;
 
@@ -233,6 +231,15 @@ export default function Home() {
         path,
         startedAt,
       } = fileChunks.current[fileId];
+      console.log(
+        `file-end: ${fileId}, chunks: ${chunks.length}, size: ${originalSize}, path: ${path}, startedAt: ${startedAt}`,
+      );
+      if (
+        chunks.map((c) => c.byteLength).reduce((a, b) => a + b, 0) !==
+        originalSize
+      ) {
+        throw new Error("Chunks size does not match original size");
+      }
       const blob = new Blob(chunks);
       const url = URL.createObjectURL(blob);
 
@@ -277,26 +284,34 @@ export default function Home() {
       delete speedCalculations.current[fileId];
     };
 
-    const onUsersList = (users: User[]) => {
-      setConnectedUsers(users);
+    const onUsersList = ({ devices }: { devices: User[] }) => {
+      setConnectedUsers(devices);
     };
 
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-    socket.on("file-start", onFileStart);
-    socket.on("file-chunk", onFileChunk);
-    socket.on("file-end", onFileEnd);
-    socket.on("users-list", onUsersList);
+    function on(event: string, callback: (data: any) => void) {
+      const cb = ({ data: { type, ...data } }: any) => {
+        if (type === event) {
+          callback(data);
+        }
+      };
+      socket?.on("message", cb);
+      return () => {
+        socket?.off("message", cb);
+      };
+    }
+
+    const off1 = on("file-start", onFileStart);
+    const off2 = on("file-chunk", onFileChunk);
+    const off3 = on("file-end", onFileEnd);
+    const off4 = on("users-list", onUsersList);
 
     return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-      socket.off("file-start", onFileStart);
-      socket.off("file-chunk", onFileChunk);
-      socket.off("file-end", onFileEnd);
-      socket.off("users-list", onUsersList);
+      off1();
+      off2();
+      off3();
+      off4();
     };
-  }, [userid, isConnected]);
+  }, [isConnected]);
 
   const formatSpeed = (bytesPerSecond: number) => {
     if (bytesPerSecond < 1024) return `${bytesPerSecond.toFixed(0)} B/s`;
@@ -380,6 +395,7 @@ export default function Home() {
 
   const sendFiles = async () => {
     if (selectedFiles.length === 0 || recipientIds.length === 0) return;
+    if (!socket) return;
 
     setIsUploading(true);
     setProgress({});
@@ -409,14 +425,15 @@ export default function Home() {
           const fileId = `${transferId}-${Math.random().toString(36).slice(2, 9)}`;
           const startTime = Date.now();
 
-          socket.emit("file-start", {
+          socket.send({
+            type: "file-start",
             fileId,
             name: file.name,
             size: file.size,
             path:
               relativePath.includes("/") ?
                 relativePath.split("/").slice(0, -1).join("/")
-              : undefined,
+              : "",
             recipientId,
           });
 
@@ -425,9 +442,10 @@ export default function Home() {
             const chunk = file.slice(start, start + chunkSize);
             const buffer = await chunk.arrayBuffer();
 
-            socket.emit("file-chunk", {
+            socket.send({
+              type: "file-chunk",
               fileId,
-              chunk: buffer,
+              chunk: arrayBufferToBase64(buffer),
               index: i,
               totalChunks,
               recipientId,
@@ -443,7 +461,7 @@ export default function Home() {
               [fileId]: formatSpeed(currentSpeed),
             }));
 
-            await new Promise((resolve) => setTimeout(resolve, 5));
+            // await new Promise((resolve) => setTimeout(resolve, 5));
 
             setProgress((prev) => ({
               ...prev,
@@ -451,14 +469,15 @@ export default function Home() {
             }));
           }
 
-          const transferTime = (Date.now() - startTime) / 1000;
-          socket.emit("file-end", {
+          // const transferTime = (Date.now() - startTime) / 1000;
+          socket.send({
+            type: "file-end",
             fileId,
             name: file.name,
-            path:
-              relativePath.includes("/") ?
-                relativePath.split("/").slice(0, -1).join("/")
-              : undefined,
+            // path:
+            //   relativePath.includes("/") ?
+            //     relativePath.split("/").slice(0, -1).join("/")
+            //   : undefined,
             recipientId,
           });
         }
@@ -672,7 +691,7 @@ export default function Home() {
               <div className="mt-4 flex flex-col items-center">
                 <div className="mb-4 rounded-lg border-4 border-white bg-white p-2 dark:border-zinc-900 dark:bg-zinc-900">
                   <QRCodeSVG
-                    value={`${connectURL}/home?connect=${userid}`}
+                    value={`${connectURL}/home?connect=${deviceId}`}
                     size={200}
                     level="H"
                     includeMargin={false}
@@ -684,12 +703,12 @@ export default function Home() {
                   Scan this code to connect to this device
                   <br />
                   <span className="mt-1 inline-block text-xs opacity-75">
-                    or share this ID: {userid}
+                    or share this ID: {deviceId}
                   </span>
                 </p>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(userid);
+                    navigator.clipboard.writeText(deviceId);
                     setShowCopied(true);
                     setTimeout(() => setShowCopied(false), 2000);
                   }}
@@ -703,17 +722,17 @@ export default function Home() {
           </div>
         )}
 
-        {userid && (
+        {isConnected && (
           <div className="mt-4 flex items-center justify-between rounded bg-zinc-100 p-3 dark:bg-zinc-800">
             <div className="flex-1 truncate">
               <span className="block text-sm text-zinc-500 dark:text-zinc-400">
                 Your ID:
               </span>
-              <span className="font-mono text-sm">{userid}</span>
+              <span className="font-mono text-sm">{deviceId}</span>
             </div>
             <button
               onClick={() => {
-                copyToClipboard(userid);
+                copyToClipboard(deviceId);
                 setShowCopied(true);
                 setTimeout(() => setShowCopied(false), 2000);
               }}
@@ -729,10 +748,10 @@ export default function Home() {
       <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
         <DeviceRadar
           devices={connectedUsers
-            .filter((user) => user.id !== userid)
+            .filter((user) => user.deviceId !== deviceId)
             .map((user) => ({
-              id: user.id,
-              name: user.id.slice(0, 8) + "...",
+              id: user.deviceId,
+              name: user.deviceId.slice(0, 8) + "...",
               type: user.isMobile ? "phone" : "desktop",
               avatar: "/placeholder.svg?height=40&width=40",
               online: true,
