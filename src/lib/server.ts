@@ -7,6 +7,7 @@ const server = http.createServer(app);
 const users: Record<
   string,
   {
+    userId: string;
     socketId: string;
     isMobile: boolean;
   }
@@ -71,6 +72,7 @@ io.on("connection", (socket) => {
       return;
     }
     users[userId] = {
+      userId,
       socketId: socket.id,
       isMobile: isMobile(socket.request.headers["user-agent"] || ""),
     };
@@ -94,7 +96,7 @@ io.on("connection", (socket) => {
         chunksReceived: 0,
       };
 
-      io.to(users[recipientId].socketId).emit("file-start", {
+      io.to(users[recipientId].userId).emit("file-start", {
         fileId,
         name,
         size,
@@ -117,7 +119,7 @@ io.on("connection", (socket) => {
       }
 
       if (users[recipientId]) {
-        io.to(users[recipientId].socketId).emit(
+        io.to(users[recipientId].userId).emit(
           "file-chunk",
           {
             fileId,
@@ -141,7 +143,7 @@ io.on("connection", (socket) => {
     console.log(`✅ File transfer completed: ${name} -> ${recipientId}`);
 
     if (users[recipientId]) {
-      io.to(users[recipientId].socketId).emit("file-end", { fileId, name });
+      io.to(users[recipientId].userId).emit("file-end", { fileId, name });
     } else {
       console.log(`⚠️ No recipient found for file ${name}`);
     }
