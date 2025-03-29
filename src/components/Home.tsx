@@ -417,6 +417,13 @@ export default function Home() {
 
     try {
       for (const recipientId of recipientIds) {
+        localStorage.setItem(
+          JSON.stringify({
+            type: "knownRecipient",
+            recipientId,
+          }),
+          "true",
+        );
         for (const { file, relativePath } of selectedFiles) {
           const totalChunks = Math.ceil(file.size / chunkSize);
           const fileId = `${transferId}-${Math.random().toString(36).slice(2, 9)}`;
@@ -757,6 +764,13 @@ export default function Home() {
               type: user.isMobile ? "phone" : "desktop",
               avatar: "/placeholder.svg?height=40&width=40",
               online: true,
+              isNew:
+                localStorage.getItem(
+                  JSON.stringify({
+                    type: "knownRecipient",
+                    recipientId: user.id,
+                  }),
+                ) === "true",
             }))}
           selectedIds={recipientIds}
           onDeviceClick={(device) => toggleRecipient(device.id)}

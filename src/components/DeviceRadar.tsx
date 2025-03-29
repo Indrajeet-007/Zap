@@ -9,6 +9,7 @@ export interface Device {
   type: "laptop" | "phone" | "watch" | "tv" | "headphones" | "desktop";
   avatar: string;
   online: boolean;
+  isNew: boolean; // Add this field to indicate recently connected devices
 }
 
 interface DeviceRadarProps {
@@ -68,8 +69,18 @@ function DeviceItem({
     >
       <div className="flex flex-col items-center">
         <motion.div whileHover={{ scale: 1.1 }} className="relative">
+          {device.isNew && (
+            <div className="absolute -top-2 -right-2 z-10">
+              <div className="relative">
+                <div className="absolute inset-0 -z-10 animate-ping rounded-full bg-blue-500 opacity-75"></div>
+                <div className="relative rounded-full bg-blue-500 px-1.5 py-0.5 text-[10px] font-medium text-white shadow-sm">
+                  Suggested
+                </div>
+              </div>
+            </div>
+          )}
           <Avatar
-            className={`h-10 w-10 sm:h-12 sm:w-12 border-2 ${
+            className={`h-10 w-10 border-2 sm:h-12 sm:w-12 ${
               device.online ? "border-blue-500" : "border-gray-300"
             } ${isSelected ? "ring-2 ring-blue-500" : ""}`}
           >
@@ -95,7 +106,7 @@ function DeviceItem({
             />
           )}
         </motion.div>
-        <span className="mt-1 sm:mt-2 text-xs font-medium whitespace-nowrap text-gray-800">
+        <span className="mt-1 text-xs font-medium whitespace-nowrap text-gray-800 sm:mt-2">
           {device.name}
         </span>
         <span className="text-[10px] text-gray-600">
@@ -124,16 +135,16 @@ export default function DeviceRadar({
     };
 
     updateSize();
-    window.addEventListener('resize', updateSize);
+    window.addEventListener("resize", updateSize);
 
-    return () => window.removeEventListener('resize', updateSize);
+    return () => window.removeEventListener("resize", updateSize);
   }, []);
 
   useEffect(() => {
     const updatePositions = () => {
       const newPositions: Record<string, { x: number; y: number }> = {};
       const radius = containerSize * 0.375; // Adjust radius based on container size
-      
+
       devices.forEach((device, index) => {
         const angle = (index / devices.length) * 2 * Math.PI;
         const baseX = Math.cos(angle) * radius;
@@ -153,15 +164,17 @@ export default function DeviceRadar({
   }, [devices, containerSize]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-4 w-full">
-      <div className="mb-4 sm:mb-8 text-center">
-        <h1 className="mb-1 sm:mb-2 text-xl sm:text-2xl font-bold text-black">Nearby Devices</h1>
-        <p className="text-sm sm:text-base text-gray-600">
+    <div className="flex w-full flex-col items-center justify-center p-4">
+      <div className="mb-4 text-center sm:mb-8">
+        <h1 className="mb-1 text-xl font-bold text-black sm:mb-2 sm:text-2xl">
+          Nearby Devices
+        </h1>
+        <p className="text-sm text-gray-600 sm:text-base">
           Displaying {devices.filter((d) => d.online).length} active devices
         </p>
       </div>
 
-      <div 
+      <div
         className="relative"
         style={{
           height: `${containerSize}px`,
@@ -189,7 +202,7 @@ export default function DeviceRadar({
           />
         </div>
 
-        <div className="absolute top-1/2 left-1/2 h-2 w-2 sm:h-2 sm:w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500"></div>
+        <div className="absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500 sm:h-2 sm:w-2"></div>
 
         {devices.map((device) => (
           <DeviceItem
