@@ -446,7 +446,6 @@ export default function Home() {
               [fileId]: formatSpeed(currentSpeed),
             }));
 
-            await new Promise((resolve) => setTimeout(resolve, 5));
 
             setProgress((prev) => ({
               ...prev,
@@ -627,10 +626,10 @@ export default function Home() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
-      {/* Connection Status */}
-      <div className="mb-8 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <div className="flex items-center p-2 justify-between">
-          <div className="flex items-center space-x-2">
+      {/* Connection Status - Responsive layout */}
+      <div className="mb-6 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800 md:mb-8">
+        <div className="flex flex-col items-start justify-between p-2 sm:flex-row sm:items-center">
+          <div className="flex items-center space-x-2 mb-2 sm:mb-0">
             {isConnected ?
               <Wifi className="h-5 w-5 text-green-600 dark:text-green-500" />
             : <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />}
@@ -638,10 +637,10 @@ export default function Home() {
               Status: {isConnected ? "Connected" : "Disconnected"}
             </span>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               onClick={() => setShowLogs(true)}
-              className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+              className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 w-full justify-center sm:w-auto"
             >
               <span>View History</span>
               {transferLogs.length > 0 && (
@@ -659,11 +658,11 @@ export default function Home() {
 
         {isConnected && (
           <div className="mb-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium">Device Connection</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-sm font-medium mb-2 sm:mb-0">Device Connection</h3>
               <button
                 onClick={() => setShowQrCode(!showQrCode)}
-                className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 w-full sm:w-auto justify-center"
               >
                 <QrCodeIcon className="h-4 w-4" />
                 {showQrCode ? "Hide QR Code" : "Show QR Code"}
@@ -675,7 +674,7 @@ export default function Home() {
                 <div className="mb-4 rounded-lg border-4 border-white bg-white p-2 dark:border-zinc-900 dark:bg-zinc-900">
                   <QRCodeSVG
                     value={`${connectURL}/home?connect=${userid}`}
-                    size={200}
+                    size={window.innerWidth < 400 ? 150 : 200}
                     level="H"
                     includeMargin={false}
                     fgColor="currentColor"
@@ -686,7 +685,7 @@ export default function Home() {
                   Scan this code to connect to this device
                   <br />
                   <span className="mt-1 inline-block text-xs opacity-75">
-                    or share this ID: {userid}
+                    or share this ID: {userid.slice(0, 12)}...
                   </span>
                 </p>
                 <button
@@ -711,7 +710,7 @@ export default function Home() {
               <span className="block text-sm text-zinc-500 dark:text-zinc-400">
                 Your ID:
               </span>
-              <span className="font-mono text-sm">{userid}</span>
+              <span className="font-mono text-sm">{userid.slice(0, 12)}...</span>
             </div>
             <button
               onClick={() => {
@@ -728,7 +727,8 @@ export default function Home() {
         )}
       </div>
 
-      <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
+      {/* Device Radar - Responsive sizing */}
+      <div className="mb-6 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800 md:mb-8 md:p-6">
         <DeviceRadar
           devices={connectedUsers
             .filter((user) => user.id !== userid)
@@ -744,12 +744,12 @@ export default function Home() {
         />
       </div>
 
-      {/* Send Files Section */}
-      <div className="mb-8 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
-        <h2 className="mb-4 text-xl font-semibold">Send Files or Folders</h2>
+      {/* Send Files Section - Responsive grid */}
+      <div className="mb-6 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800 md:mb-8 md:p-6">
+        <h2 className="mb-4 text-lg font-semibold md:text-xl">Send Files or Folders</h2>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Select Files
@@ -894,7 +894,7 @@ export default function Home() {
               return (
                 <div key={fileId}>
                   <div className="mb-1 flex justify-between">
-                    <p className="max-w-xs truncate text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="max-w-[70%] truncate text-sm text-zinc-600 dark:text-zinc-400">
                       {filePath ? `${filePath}/` : ""}
                       {fileName}
                     </p>
@@ -905,7 +905,7 @@ export default function Home() {
                   <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
                     <div
                       className="h-2 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
-                      style={{ width: `${fileProgress}%` }}
+                      style={{ width: `${Math.round(fileProgress)}%` }}
                     ></div>
                   </div>
                   <p className="mt-1 text-right text-xs text-zinc-500 dark:text-zinc-400">
@@ -918,12 +918,12 @@ export default function Home() {
         )}
       </div>
 
-      {/* Received Files Section */}
+      {/* Received Files Section - Responsive layout */}
       {receivedFiles.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 p-6 dark:border-zinc-800">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Received Files</h2>
-            <div className="flex items-center space-x-2">
+        <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800 md:p-6">
+          <div className="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
+            <h2 className="text-lg font-semibold md:text-xl">Received Files</h2>
+            <div className="mt-2 flex items-center space-x-2 sm:mt-0">
               <span className="text-sm text-zinc-500 dark:text-zinc-400">
                 {receivedFiles.length} item(s)
               </span>
@@ -932,7 +932,8 @@ export default function Home() {
                 className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
                 <ArrowDown className="mr-1 h-4 w-4" />
-                Download All
+                <span className="hidden sm:inline">Download All</span>
+                <span className="sm:hidden">All</span>
               </button>
             </div>
           </div>
@@ -961,33 +962,34 @@ export default function Home() {
                       key={path}
                       className="rounded-md bg-zinc-100 p-4 dark:bg-zinc-800"
                     >
-                      <div className="mb-2 flex items-center justify-between">
-                        <div className="flex items-center">
+                      <div className="mb-2 flex flex-col items-start justify-between sm:flex-row sm:items-center">
+                        <div className="flex items-center mb-2 sm:mb-0">
                           <FolderIcon className="mr-2 h-6 w-6 text-yellow-500" />
-                          <span className="font-medium">{path}</span>
+                          <span className="font-medium truncate max-w-[200px]">{path}</span>
                         </div>
                         <button
                           onClick={() => downloadFolder(path)}
                           className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
                         >
                           <ArrowUpFromLine className="mr-1 h-3 w-3" />
-                          Download Folder
+                          <span className="hidden sm:inline">Download Folder</span>
+                          <span className="sm:hidden">Folder</span>
                         </button>
                       </div>
-                      <div className="ml-8 space-y-2">
+                      <div className="ml-2 sm:ml-8 space-y-2">
                         {files.map((file, index) => (
                           <div
                             key={index}
                             className="flex items-center justify-between border-b py-2 last:border-b-0"
                           >
-                            <div className="flex items-center">
+                            <div className="flex items-center max-w-[70%]">
                               <FileIcon className="mr-2 h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-                              <span>{file.name}</span>
+                              <span className="truncate">{file.name}</span>
                             </div>
                             <a
                               href={file.file}
                               download={file.name}
-                              className="text-sm text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
+                              className="text-sm text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 whitespace-nowrap"
                             >
                               Download
                             </a>
@@ -1001,22 +1003,24 @@ export default function Home() {
                   {rootFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="flex items-center rounded-md bg-zinc-100 p-4 dark:bg-zinc-800"
+                      className="flex flex-col items-start rounded-md bg-zinc-100 p-4 dark:bg-zinc-800 sm:flex-row sm:items-center"
                     >
-                      <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium">{file.name}</p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                          {formatFileSize(file.size)} •{" "}
-                          {file.receivedAt.toLocaleTimeString()}
-                        </p>
+                      <div className="flex items-center mb-2 sm:mb-0">
+                        <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
+                        <div className="min-w-0">
+                          <p className="truncate font-medium max-w-[200px] sm:max-w-none">{file.name}</p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {formatFileSize(file.size)} •{" "}
+                            {file.receivedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
                       </div>
                       <a
                         href={file.file}
                         download={file.name}
-                        className="ml-4 inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        className="ml-auto mt-2 inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 sm:mt-0 sm:ml-4"
                       >
-                        <CheckCircle className="mr-1 h-4 w-4" />
+                        <ArrowDown className="mr-1 h-4 w-4" />
                         Download
                       </a>
                     </div>

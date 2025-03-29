@@ -13,7 +13,7 @@ export interface Device {
 
 interface DeviceRadarProps {
   devices: Device[];
-  selectedIds?: string[]; // Changed from selectedId to selectedIds
+  selectedIds?: string[];
   onDeviceClick?: (device: Device) => void;
 }
 
@@ -33,17 +33,17 @@ function DeviceItem({
   const getDeviceIcon = (type: string) => {
     switch (type) {
       case "laptop":
-        return <Laptop className="h-5 w-5" />;
+        return <Laptop className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "phone":
-        return <Smartphone className="h-5 w-5" />;
+        return <Smartphone className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "watch":
-        return <Watch className="h-5 w-5" />;
+        return <Watch className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "tv":
-        return <Tv className="h-5 w-5" />;
+        return <Tv className="h-4 w-4 sm:h-5 sm:w-5" />;
       case "headphones":
-        return <Headphones className="h-5 w-5" />;
+        return <Headphones className="h-4 w-4 sm:h-5 sm:w-5" />;
       default:
-        return <Laptop className="h-5 w-5" />;
+        return <Laptop className="h-4 w-4 sm:h-5 sm:w-5" />;
     }
   };
 
@@ -69,9 +69,9 @@ function DeviceItem({
       <div className="flex flex-col items-center">
         <motion.div whileHover={{ scale: 1.1 }} className="relative">
           <Avatar
-            className={`h-12 w-12 border-2 ${
+            className={`h-10 w-10 sm:h-12 sm:w-12 border-2 ${
               device.online ? "border-blue-500" : "border-gray-300"
-            } ${isSelected ? "ring-2 ring-blue-500" : ""}`} // Added ring for selected state
+            } ${isSelected ? "ring-2 ring-blue-500" : ""}`}
           >
             <AvatarImage src={device.avatar} alt={device.name} />
             <AvatarFallback
@@ -95,7 +95,7 @@ function DeviceItem({
             />
           )}
         </motion.div>
-        <span className="mt-2 text-xs font-medium whitespace-nowrap text-gray-800">
+        <span className="mt-1 sm:mt-2 text-xs font-medium whitespace-nowrap text-gray-800">
           {device.name}
         </span>
         <span className="text-[10px] text-gray-600">
@@ -108,19 +108,34 @@ function DeviceItem({
 
 export default function DeviceRadar({
   devices,
-  selectedIds = [], // Default to empty array
+  selectedIds = [],
   onDeviceClick,
 }: DeviceRadarProps) {
   const [positions, setPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
+  const [containerSize, setContainerSize] = useState(300); // Default size for mobile
+
+  useEffect(() => {
+    // Update container size based on window width
+    const updateSize = () => {
+      const width = window.innerWidth;
+      setContainerSize(width < 640 ? 250 : 400); // 300px for mobile, 400px for desktop
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   useEffect(() => {
     const updatePositions = () => {
       const newPositions: Record<string, { x: number; y: number }> = {};
+      const radius = containerSize * 0.375; // Adjust radius based on container size
+      
       devices.forEach((device, index) => {
         const angle = (index / devices.length) * 2 * Math.PI;
-        const radius = 150;
         const baseX = Math.cos(angle) * radius;
         const baseY = Math.sin(angle) * radius;
         newPositions[device.id] = {
@@ -135,18 +150,24 @@ export default function DeviceRadar({
     const interval = setInterval(updatePositions, 1000);
 
     return () => clearInterval(interval);
-  }, [devices]);
+  }, [devices, containerSize]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-4">
-      <div className="mb-8 text-center">
-        <h1 className="mb-2 text-2xl font-bold text-black">Nearby Devices</h1>
-        <p className="text-gray-600">
+    <div className="flex flex-col items-center justify-center p-4 w-full">
+      <div className="mb-4 sm:mb-8 text-center">
+        <h1 className="mb-1 sm:mb-2 text-xl sm:text-2xl font-bold text-black">Nearby Devices</h1>
+        <p className="text-sm sm:text-base text-gray-600">
           Displaying {devices.filter((d) => d.online).length} active devices
         </p>
       </div>
 
-      <div className="relative h-[400px] w-[400px]">
+      <div 
+        className="relative"
+        style={{
+          height: `${containerSize}px`,
+          width: `${containerSize}px`,
+        }}
+      >
         <div className="absolute inset-0 rounded-full border border-gray-300 bg-gray-200/50 backdrop-blur-sm"></div>
         <div className="absolute inset-0 rounded-full border border-gray-300"></div>
         <div className="absolute inset-[25%] rounded-full border border-gray-300"></div>
@@ -168,14 +189,14 @@ export default function DeviceRadar({
           />
         </div>
 
-        <div className="absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500"></div>
+        <div className="absolute top-1/2 left-1/2 h-2 w-2 sm:h-2 sm:w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-500"></div>
 
         {devices.map((device) => (
           <DeviceItem
             key={device.id}
             device={device}
             position={positions[device.id] || { x: 0, y: 0 }}
-            isSelected={selectedIds.includes(device.id)} // Check if device is in selectedIds
+            isSelected={selectedIds.includes(device.id)}
             onClick={onDeviceClick}
           />
         ))}
