@@ -62,7 +62,6 @@ export default function Home() {
     {},
   );
   const [showQrCode, setShowQrCode] = useState(true);
-  const [showQrCode, setShowQrCode] = useState(true);
   const [showCopied, setShowCopied] = useState(false);
   const [transferLogs, setTransferLogs] = useState<TransferLog[]>([]);
   const [showLogs, setShowLogs] = useState(false);
