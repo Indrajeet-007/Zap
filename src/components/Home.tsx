@@ -1,4 +1,7 @@
 // Home.tsx
+import { QrCodeIcon } from "@heroicons/react/24/outline";
+import { saveAs } from "file-saver";
+import JSZip from "jszip";
 import {
   ArrowUpFromLine,
   CheckCircle,
@@ -11,15 +14,12 @@ import {
   WifiOff,
   X,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-import { QRCodeSVG } from "qrcode.react";
-import { QrCodeIcon } from "@heroicons/react/24/outline";
 
-const connectURL = import.meta.env.VITE_CONNECT_URL
+const connectURL = import.meta.env.VITE_CONNECT_URL;
 interface ReceivedFile {
   name: string;
   file: string;
@@ -72,16 +72,24 @@ export default function Home() {
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
 
   useEffect(() => {
+    if (userid) return;
+    console.log("✅ Registered:", socket.id);
+    setIsConnected(true);
+    socket.emit("register", { userId: socket.id });
+    if (socket.id) setuserid(socket.id);
+  }, [userid]);
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     console.log(urlParams);
     const connectTo = urlParams.get("connect");
-  
+
     if (connectTo && connectTo !== userid) {
-      // Add to recipients if not already there 
+      // Add to recipients if not already there
       if (!recipientIds.includes(connectTo)) {
         setRecipientIds((prev) => [...prev, connectTo]);
       }
-  
+
       // Redirect to /home without parameters
       window.history.replaceState(null, "", "/home");
     }
@@ -229,7 +237,7 @@ export default function Home() {
       socket.off("file-end", onFileEnd);
       socket.off("users-list", onUsersList);
     };
-  }, [userid]);
+  }, [userid, isConnected]);
 
   const formatSpeed = (bytesPerSecond: number) => {
     if (bytesPerSecond < 1024) return `${bytesPerSecond.toFixed(0)} B/s`;
