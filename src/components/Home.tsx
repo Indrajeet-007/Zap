@@ -550,7 +550,7 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
       {/* Connection Status - Responsive layout */}
-      <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 dark:border-zinc-800">
+      <div className="mb-6 rounded-lg border border-neutral-800 p-4 md:mb-8 dark:border-zinc-800">
         <div className="flex flex-col items-start justify-between p-2 sm:flex-row sm:items-center">
           <div className="mb-2 flex items-center space-x-2 sm:mb-0">
             {isConnected ?
@@ -580,7 +580,7 @@ export default function Home() {
         </div>
 
         {isConnected && (
-          <div className="mb-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="mb-4 rounded-lg border border-neutral-800 p-4 dark:border-zinc-800">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <h3 className="mb-2 text-sm font-medium sm:mb-0">
                 Device Connection
@@ -655,7 +655,7 @@ export default function Home() {
       </div>
 
       {/* Device Radar - Responsive sizing */}
-      <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
+      <div className="mb-6 rounded-lg border border-neutral-800 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
         <DeviceRadar
           devices={connectedUsers
             .filter((user) => user.id !== userid)
@@ -679,7 +679,7 @@ export default function Home() {
       </div>
 
       {/* Send Files Section - Responsive grid */}
-      <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
+      <div className="mb-6 rounded-lg border border-neutral-800 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
         <h2 className="mb-4 text-lg font-semibold md:text-xl">
           Send Files or Folders
         </h2>
@@ -856,7 +856,7 @@ export default function Home() {
 
       {/* Received Files Section - Responsive layout */}
       {receivedFiles.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 p-4 md:p-6 dark:border-zinc-800">
+        <div className="rounded-lg border border-neutral-800 p-4 md:p-6 dark:border-zinc-800">
           <div className="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
             <h2 className="text-lg font-semibold md:text-xl">Received Files</h2>
             <div className="mt-2 flex items-center space-x-2 sm:mt-0">
