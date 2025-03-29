@@ -647,14 +647,19 @@ export default function Home() {
   );
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
-      {/* Connection Status - Responsive layout */}
-      <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 dark:border-zinc-800">
-        <div className="flex flex-col items-start justify-between p-2 sm:flex-row sm:items-center">
+    <main className="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
+  {/* Top Section - Two Column Layout */}
+  <div className="grid grid-cols-1 gap-6 lg:grid-cols-[350px_1fr] lg:gap-6">
+    {/* Left Column - Connection Status */}
+    <div className="lg:col-span-1">
+      <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="flex flex-col items-start justify-between p-3 sm:flex-row sm:items-center">
           <div className="mb-2 flex items-center space-x-2 sm:mb-0">
-            {isConnected ?
+            {isConnected ? (
               <Wifi className="h-5 w-5 text-green-600 dark:text-green-500" />
-            : <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />}
+            ) : (
+              <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />
+            )}
             <span className="font-medium">
               Status: {isConnected ? "Connected" : "Disconnected"}
             </span>
@@ -679,7 +684,7 @@ export default function Home() {
         </div>
 
         {isConnected && (
-          <div className="mb-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <div className="mb-4 rounded-lg h-full border border-zinc-200 p-4 dark:border-zinc-800">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <h3 className="mb-2 text-sm font-medium sm:mb-0">
                 Device Connection
@@ -752,9 +757,12 @@ export default function Home() {
           </div>
         )}
       </div>
+    </div>
 
-      {/* Device Radar - Responsive sizing */}
-      <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
+    {/* Right Column - Device Radar and Send Files */}
+    <div className="space-y-6">
+      {/* Device Radar */}
+      <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
         <DeviceRadar
           devices={connectedUsers
             .filter((user) => user.id !== userid)
@@ -777,8 +785,11 @@ export default function Home() {
         />
       </div>
 
-      {/* Send Files Section - Responsive grid */}
-      <div className="mb-6 rounded-lg border border-zinc-200 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
+      {/* Send Files */}
+      
+    </div>
+  </div>
+  <div className="rounded-lg mt-6 border border-zinc-200 p-4 dark:border-zinc-800">
         <h2 className="mb-4 text-lg font-semibold md:text-xl">
           Send Files or Folders
         </h2>
@@ -836,12 +847,14 @@ export default function Home() {
                     className="flex items-center justify-between border-b p-2 last:border-b-0 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
                     <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
-                      {item.relativePath.includes("/") ?
+                      {item.relativePath.includes("/") ? (
                         <FolderIcon className="mr-2 h-4 w-4 text-yellow-500" />
-                      : <FileIcon className="mr-2 h-4 w-4" />}
+                      ) : (
+                        <FileIcon className="mr-2 h-4 w-4" />
+                      )}
                       <div className="min-w-0">
                         <div className="truncate">
-                          {item.relativePath.includes("/") ?
+                          {item.relativePath.includes("/") ? (
                             <>
                               <span className="text-zinc-400 dark:text-zinc-500">
                                 {item.relativePath
@@ -852,7 +865,9 @@ export default function Home() {
                               </span>
                               <span>{item.file.name}</span>
                             </>
-                          : item.file.name}
+                          ) : (
+                            item.file.name
+                          )}
                         </div>
                         <div className="text-xs text-zinc-400 dark:text-zinc-500">
                           {formatFileSize(item.file.size)}
@@ -906,16 +921,17 @@ export default function Home() {
             }
             className="flex w-full items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-400"
           >
-            {isUploading ?
+            {isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Uploading...
               </>
-            : <>
+            ) : (
+              <>
                 <ArrowUpFromLine className="mr-2 h-4 w-4" />
                 Send to {recipientIds.length} recipient(s)
               </>
-            }
+            )}
           </button>
         </div>
 
@@ -952,132 +968,129 @@ export default function Home() {
           </div>
         )}
       </div>
-
-      {/* Received Files Section - Responsive layout */}
-      {receivedFiles.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 p-4 md:p-6 dark:border-zinc-800">
-          <div className="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-            <h2 className="text-lg font-semibold md:text-xl">Received Files</h2>
-            <div className="mt-2 flex items-center space-x-2 sm:mt-0">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                {receivedFiles.length} item(s)
-              </span>
-              <button
-                onClick={downloadAllFiles}
-                className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                <ArrowDown className="mr-1 h-4 w-4" />
-                <span className="hidden sm:inline">Download All</span>
-                <span className="sm:hidden">All</span>
-              </button>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {/* Group files by folder */}
-            {(() => {
-              const folders: Record<string, ReceivedFile[]> = {};
-              const rootFiles: ReceivedFile[] = [];
-
-              receivedFiles.forEach((file) => {
-                if (file.path) {
-                  if (!folders[file.path]) {
-                    folders[file.path] = [];
-                  }
-                  folders[file.path].push(file);
-                } else {
-                  rootFiles.push(file);
-                }
-              });
-
-              return (
-                <>
-                  {/* Display folders first */}
-                  {Object.entries(folders).map(([path, files]) => (
-                    <div
-                      key={path}
-                      className="rounded-md bg-zinc-100 p-4 dark:bg-zinc-800"
-                    >
-                      <div className="mb-2 flex flex-col items-start justify-between sm:flex-row sm:items-center">
-                        <div className="mb-2 flex items-center sm:mb-0">
-                          <FolderIcon className="mr-2 h-6 w-6 text-yellow-500" />
-                          <span className="max-w-[200px] truncate font-medium">
-                            {path}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => downloadFolder(path)}
-                          className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-                        >
-                          <ArrowUpFromLine className="mr-1 h-3 w-3" />
-                          <span className="hidden sm:inline">
-                            Download Folder
-                          </span>
-                          <span className="sm:hidden">Folder</span>
-                        </button>
-                      </div>
-                      <div className="ml-2 space-y-2 sm:ml-8">
-                        {files.map((file, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between border-b py-2 last:border-b-0"
-                          >
-                            <div className="flex max-w-[70%] items-center">
-                              <FileIcon className="mr-2 h-4 w-4 text-zinc-600 dark:text-zinc-300" />
-                              <span className="truncate">{file.name}</span>
-                            </div>
-                            <a
-                              href={file.file}
-                              download={file.name}
-                              className="text-sm whitespace-nowrap text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
-                            >
-                              Download
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Display root files */}
-                  {rootFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col items-start rounded-md bg-zinc-100 p-4 sm:flex-row sm:items-center dark:bg-zinc-800"
-                    >
-                      <div className="mb-2 flex items-center sm:mb-0">
-                        <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
-                        <div className="min-w-0">
-                          <p className="max-w-[200px] truncate font-medium sm:max-w-none">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {formatFileSize(file.size)} •{" "}
-                            {file.receivedAt.toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <a
-                        href={file.file}
-                        download={file.name}
-                        className="mt-2 ml-auto inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 sm:mt-0 sm:ml-4 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
-                      >
-                        <ArrowDown className="mr-1 h-4 w-4" />
-                        Download
-                      </a>
-                    </div>
-                  ))}
-                </>
-              );
-            })()}
-          </div>
+  {/* Received Files Section - Below both columns */}
+  {receivedFiles.length > 0 && (
+    <div className="mt-6 rounded-lg border border-zinc-200 p-4 md:p-6 dark:border-zinc-800">
+      <div className="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
+        <h2 className="text-lg font-semibold md:text-xl">Received Files</h2>
+        <div className="mt-2 flex items-center space-x-2 sm:mt-0">
+          <span className="text-sm text-zinc-500 dark:text-zinc-400">
+            {receivedFiles.length} item(s)
+          </span>
+          <button
+            onClick={downloadAllFiles}
+            className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+          >
+            <ArrowDown className="mr-1 h-4 w-4" />
+            <span className="hidden sm:inline">Download All</span>
+            <span className="sm:hidden">All</span>
+          </button>
         </div>
-      )}
+      </div>
+      <div className="space-y-3">
+        {/* Group files by folder */}
+        {(() => {
+          const folders: Record<string, ReceivedFile[]> = {};
+          const rootFiles: ReceivedFile[] = [];
 
-      {/* Transfer Log Panel */}
-      {showLogs && <TransferLogPanel />}
-    </main>
+          receivedFiles.forEach((file) => {
+            if (file.path) {
+              if (!folders[file.path]) {
+                folders[file.path] = [];
+              }
+              folders[file.path].push(file);
+            } else {
+              rootFiles.push(file);
+            }
+          });
+
+          return (
+            <>
+              {/* Display folders first */}
+              {Object.entries(folders).map(([path, files]) => (
+                <div
+                  key={path}
+                  className="rounded-md bg-zinc-100 p-4 dark:bg-zinc-800"
+                >
+                  <div className="mb-2 flex flex-col items-start justify-between sm:flex-row sm:items-center">
+                    <div className="mb-2 flex items-center sm:mb-0">
+                      <FolderIcon className="mr-2 h-6 w-6 text-yellow-500" />
+                      <span className="max-w-[200px] truncate font-medium">
+                        {path}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => downloadFolder(path)}
+                      className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                    >
+                      <ArrowUpFromLine className="mr-1 h-3 w-3" />
+                      <span className="hidden sm:inline">Download Folder</span>
+                      <span className="sm:hidden">Folder</span>
+                    </button>
+                  </div>
+                  <div className="ml-2 space-y-2 sm:ml-8">
+                    {files.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between border-b py-2 last:border-b-0"
+                      >
+                        <div className="flex items-center overflow-hidden">
+                          <FileIcon className="mr-2 h-4 w-4 flex-shrink-0 text-zinc-600 dark:text-zinc-300" />
+                          <span className="truncate">{file.name}</span>
+                        </div>
+                        <a
+                          href={file.file}
+                          download={file.name}
+                          className="flex-shrink-0 text-sm text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {/* Display root files */}
+              {rootFiles.map((file, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col items-start rounded-md bg-zinc-100 p-4 sm:flex-row sm:items-center dark:bg-zinc-800"
+                >
+                  <div className="mb-2 flex items-center sm:mb-0">
+                    <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
+                    <div className="min-w-0">
+                      <p className="max-w-[200px] truncate font-medium sm:max-w-none">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {formatFileSize(file.size)} •{" "}
+                        {file.receivedAt.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={file.file}
+                    download={file.name}
+                    className="mt-2 ml-auto inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 sm:mt-0 sm:ml-4 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  >
+                    <ArrowDown className="mr-1 h-4 w-4" />
+                    Download
+                  </a>
+                </div>
+              ))}
+            </>
+          );
+        })()}
+      </div>
+    </div>
+  )}
+
+  {/* Transfer Log Panel */}
+  {showLogs && <TransferLogPanel />}
+</main>
   );
 }
