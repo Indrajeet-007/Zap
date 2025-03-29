@@ -302,15 +302,12 @@ export function TextAnimate({
   variants,
   className,
   segmentClassName,
-  as: Component = "p",
   startOnView = true,
   once = false,
   by = "word",
   animation = "fadeIn",
   ...props
 }: TextAnimateProps) {
-  const MotionComponent = motion.create(Component);
-
   let segments: string[] = [];
   switch (by) {
     case "word":
@@ -376,7 +373,7 @@ export function TextAnimate({
 
   return (
     <AnimatePresence mode="popLayout">
-      <MotionComponent
+      <motion.div
         variants={finalVariants.container as Variants}
         initial="hidden"
         whileInView={startOnView ? "show" : undefined}
@@ -400,7 +397,7 @@ export function TextAnimate({
             {segment}
           </motion.span>
         ))}
-      </MotionComponent>
+      </motion.div>
     </AnimatePresence>
   );
 }
