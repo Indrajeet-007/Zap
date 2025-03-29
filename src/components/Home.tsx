@@ -1,4 +1,7 @@
 // Home.tsx
+import { QrCodeIcon } from "@heroicons/react/24/outline";
+import { saveAs } from "file-saver";
+import JSZip from "jszip";
 import {
   ArrowUpFromLine,
   CheckCircle,
@@ -11,6 +14,7 @@ import {
   WifiOff,
   X,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
@@ -84,6 +88,7 @@ export default function Home() {
   interface User {
     id: string;
     socketId: string;
+    isMobile: boolean;
   }
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
 
@@ -288,7 +293,7 @@ export default function Home() {
       socket.off("file-end", onFileEnd);
       socket.off("users-list", onUsersList);
     };
-  }, [userid]);
+  }, [userid, isConnected]);
 
   const formatSpeed = (bytesPerSecond: number) => {
     if (bytesPerSecond < 1024) return `${bytesPerSecond.toFixed(0)} B/s`;
@@ -725,7 +730,7 @@ export default function Home() {
             .map((user) => ({
               id: user.id,
               name: user.id.slice(0, 8) + "...",
-              type: "desktop",
+              type: user.isMobile ? "phone" : "desktop",
               avatar: "/placeholder.svg?height=40&width=40",
               online: true,
             }))}
