@@ -90,8 +90,8 @@ const DeviceItem = ({
                   className="absolute inset-0 -z-10 rounded-full bg-blue-500"
                 />
                 {/* Badge */}
-                <div className="relative flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-medium text-white shadow-md">
-                  2
+                <div className="relative flex items-center justify-center rounded-full bg-blue-500 text-[10px] font-medium text-white shadow-md">
+                  Suggested
                 </div>
               </div>
             </motion.div>
