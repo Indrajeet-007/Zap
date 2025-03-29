@@ -651,7 +651,7 @@ export default function Home() {
       {/* Top Section - Two Column Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[350px_1fr] lg:gap-6">
         {/* Left Column - Connection Status */}
-        <div className="lg:col-span-1">
+        <div className="">
           <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
             <div className="flex flex-col items-start justify-between p-3 sm:flex-row sm:items-center">
               <div className="mb-2 flex items-center space-x-2 sm:mb-0">
@@ -668,7 +668,7 @@ export default function Home() {
                   onClick={() => setShowLogs(true)}
                   className="flex w-full items-center justify-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 sm:w-auto dark:bg-zinc-800 dark:hover:bg-zinc-700"
                 >
-                  <span>View History</span>
+                  <span>History</span>
                   {transferLogs.length > 0 && (
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-700">
                       {transferLogs.length}
@@ -759,7 +759,7 @@ export default function Home() {
         </div>
 
         {/* Right Column - Device Radar and Send Files */}
-        <div className="space-y-6">
+        <div className="grid">
           {/* Device Radar */}
           <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
             <DeviceRadar
