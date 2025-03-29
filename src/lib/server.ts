@@ -125,10 +125,7 @@ io.on("connection", (socket) => {
             index,
             totalChunks,
           },
-          () => {
-            // Send acknowledgement back to sender
-            acknowledgement();
-          },
+          acknowledgement,
         );
       } else {
         console.log(`⚠️ No recipient found for chunk ${index + 1}`);
