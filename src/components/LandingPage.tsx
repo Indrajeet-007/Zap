@@ -19,8 +19,8 @@ export default function LandingPage() {
       </span>
       <Particles
         className="absolute inset-0 z-0"
-        quantity={100}
-        ease={80}
+        quantity={200}
+        ease={100}
         color={color}
         refresh
       />

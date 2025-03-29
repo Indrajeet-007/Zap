@@ -11,13 +11,16 @@ import {
   RefreshCw,
   Wifi,
   WifiOff,
+  AlertCircle,
+  Clock,
   X,
+  ArrowDown,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useRef, useState } from "react";
 import { socket } from "../lib/socket";
 import DeviceRadar from "./DeviceRadar";
-
+import {cn} from "../lib/utils";
 const connectURL = import.meta.env.VITE_CONNECT_URL;
 
 interface TransferLog {
@@ -533,90 +536,90 @@ export default function Home() {
   };
 
   const TransferLogPanel = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
-      {" "}
-      <div className="w-full max-w-4xl rounded-lg bg-white p-6 shadow-xl dark:bg-zinc-900">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">File Transfer History</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={clearTransferLogs}
-              className="rounded-md bg-red-100 px-3 py-1 text-sm text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800"
-            >
-              Clear History
-            </button>
-            <button
-              onClick={() => setShowLogs(false)}
-              className="rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              <X className="h-5 w-5" />
-            </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-4xl overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-2xl transition-all dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-800">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold tracking-tight">File Transfer History</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={clearTransferLogs}
+                className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                Clear History
+              </button>
+              <button
+                onClick={() => setShowLogs(false)}
+                className="rounded-full p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto rounded-lg border dark:border-zinc-700">
-          {transferLogs.length === 0 ?
-            <div className="p-4 text-center text-zinc-500">
-              No transfer history yet
+        <div className="max-h-[70vh] overflow-y-auto">
+          {transferLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              
+              <p className="text-zinc-500 dark:text-zinc-400">No transfer history yet</p>
             </div>
-          : <div className="divide-y dark:divide-zinc-700">
+          ) : (
+            <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {transferLogs.map((log) => (
                 <div
                   key={log.id}
-                  className={`p-3 text-sm ${
-                    log.status === "failed" ? "bg-red-50 dark:bg-red-900/30"
-                    : log.status === "in-progress" ?
-                      "bg-blue-50 dark:bg-blue-900/30"
-                    : "bg-white dark:bg-zinc-900"
-                  }`}
+                  className={cn(
+                    "p-4 text-sm transition-colors",
+                    log.status === "failed" && "bg-zinc-50 dark:bg-zinc-900",
+                    log.status === "in-progress" && "bg-zinc-50 dark:bg-zinc-900",
+                  )}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        {log.type === "sent" ?
-                          <ArrowUpFromLine className="h-4 w-4 text-blue-500" />
-                        : <CheckCircle className="h-4 w-4 text-green-500" />}
-                        <div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700">
+                          {log.type === "sent" ? (
+                            <ArrowUpFromLine className="h-4 w-4" />
+                          ) : (
+                            <ArrowDown className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="flex flex-col items-start">
                           <div className="font-medium">
                             {log.path ? `${log.path}/` : ""}
                             {log.fileName}
                           </div>
-                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {log.fileSize} •{" "}
-                            {log.type === "sent" ? "Sent to" : "Received from"}
-                            {log.recipients ?
-                              ` ${log.recipients.length} recipient(s)`
-                            : ""}
+                          <div className="flex mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                            {log.fileSize} • {log.type === "sent" ? "Sent to" : "Received from"} 
+                            {log.recipients ? ` ${log.recipients.length} recipient(s)` : ""}
                           </div>
                         </div>
                       </div>
-                      {log.transferTime && (
-                        <div className="mt-1 pl-6 text-xs text-zinc-500 dark:text-zinc-400">
-                          {log.transferTime} • {log.transferSpeed}
-                        </div>
-                      )}
+                      
                     </div>
-                    <div className="ml-2 flex flex-col items-end">
-                      <span
-                        className={`rounded-full px-2 py-1 text-xs ${
-                          log.status === "completed" ?
-                            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : log.status === "failed" ?
-                            "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                          : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                        }`}
-                      >
-                        {log.status}
-                      </span>
-                      <span className="mt-1 text-xs text-zinc-400">
-                        {log.timestamp.toLocaleTimeString()}
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1.5">
+                        {log.status === "completed" ? (
+                          <CheckCircle className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
+                        ) : log.status === "failed" ? (
+                          <AlertCircle className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
+                        ) : (
+                          <Clock className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
+                        )}
+                        <span className="font-medium text-zinc-700 dark:text-zinc-300">{log.status}</span>
+                        
+                      </div>
+                      <span className="mt-2 text-xs text-zinc-400">
+                        {log.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          }
+          )}
         </div>
       </div>
     </div>
@@ -626,7 +629,7 @@ export default function Home() {
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
       {/* Connection Status */}
       <div className="mb-8 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center p-2 justify-between">
           <div className="flex items-center space-x-2">
             {isConnected ?
               <Wifi className="h-5 w-5 text-green-600 dark:text-green-500" />
@@ -928,7 +931,7 @@ export default function Home() {
                 onClick={downloadAllFiles}
                 className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
-                <CheckCircle className="mr-1 h-4 w-4" />
+                <ArrowDown className="mr-1 h-4 w-4" />
                 Download All
               </button>
             </div>
