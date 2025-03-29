@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "bun --watch src/lib/server.js",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
