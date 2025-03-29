@@ -8,7 +8,6 @@ import {
   FileIcon,
   FolderIcon,
   Loader2,
-  RefreshCw,
   Wifi,
   WifiOff,
   X,
@@ -46,6 +45,9 @@ interface SelectedFile {
   path: string;
   relativePath: string;
 }
+
+const buttonSecondary =
+  "flex w-full items-center justify-center gap-1 rounded-md border border-input bg-background px-3 py-1 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground sm:w-auto";
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
@@ -550,12 +552,12 @@ export default function Home() {
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
       {/* Connection Status - Responsive layout */}
-      <div className="mb-6 rounded-lg border border-neutral-800 p-4 md:mb-8 dark:border-zinc-800">
+      <div className="bg-card mb-6 rounded-lg border p-4 shadow-sm md:mb-8">
         <div className="flex flex-col items-start justify-between p-2 sm:flex-row sm:items-center">
           <div className="mb-2 flex items-center space-x-2 sm:mb-0">
             {isConnected ?
-              <Wifi className="h-5 w-5 text-green-600 dark:text-green-500" />
-            : <WifiOff className="h-5 w-5 text-red-600 dark:text-red-500" />}
+              <Wifi className="h-5 w-5 text-green-500" />
+            : <WifiOff className="h-5 w-5 text-red-500" />}
             <span className="font-medium">
               Status: {isConnected ? "Connected" : "Disconnected"}
             </span>
@@ -563,31 +565,27 @@ export default function Home() {
           <div className="flex w-full items-center space-x-2 sm:w-auto">
             <button
               onClick={() => setShowLogs(true)}
-              className="flex w-full items-center justify-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 sm:w-auto dark:bg-zinc-800 dark:hover:bg-zinc-700"
+              className={buttonSecondary}
             >
               <span>View History</span>
               {transferLogs.length > 0 && (
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-700">
+                <span className="bg-primary text-primary-foreground inline-flex h-5 w-5 items-center justify-center rounded-full text-xs font-medium">
                   {transferLogs.length}
                 </span>
               )}
             </button>
-            <RefreshCw
-              className="h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
-              onClick={() => window.location.reload()}
-            />
           </div>
         </div>
 
         {isConnected && (
-          <div className="mb-4 rounded-lg border border-neutral-800 p-4 dark:border-zinc-800">
+          <div className="bg-card mb-4 rounded-lg border p-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <h3 className="mb-2 text-sm font-medium sm:mb-0">
                 Device Connection
               </h3>
               <button
                 onClick={() => setShowQrCode(!showQrCode)}
-                className="flex w-full items-center justify-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 sm:w-auto dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                className={buttonSecondary}
               >
                 <QrCodeIcon className="h-4 w-4" />
                 {showQrCode ? "Hide QR Code" : "Show QR Code"}
@@ -596,17 +594,17 @@ export default function Home() {
 
             {showQrCode && (
               <div className="mt-4 flex flex-col items-center">
-                <div className="mb-4 rounded-lg border-4 border-white bg-white p-2 dark:border-zinc-900 dark:bg-zinc-900">
+                <div className="mb-4 rounded-lg border-4 border-white bg-white p-2">
                   <QRCodeSVG
                     value={`${connectURL}/home?connect=${userid}`}
                     size={window.innerWidth < 400 ? 150 : 200}
                     level="H"
                     includeMargin={false}
                     fgColor="currentColor"
-                    className="text-zinc-900 dark:text-zinc-100"
+                    className="text-foreground"
                   />
                 </div>
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-muted-foreground text-center text-sm">
                   Scan this code to connect to this device
                   <br />
                   <span className="mt-1 inline-block text-xs opacity-75">
@@ -619,7 +617,7 @@ export default function Home() {
                     setShowCopied(true);
                     setTimeout(() => setShowCopied(false), 2000);
                   }}
-                  className="mt-2 flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                  className="text-primary hover:text-primary/80 mt-2 flex items-center gap-1 text-sm"
                 >
                   <Copy className="h-3 w-3" />
                   {showCopied ? "Copied!" : "Copy ID"}
@@ -630,9 +628,9 @@ export default function Home() {
         )}
 
         {userid && (
-          <div className="mt-4 flex items-center justify-between rounded bg-zinc-100 p-3 dark:bg-zinc-800">
+          <div className="bg-accent mt-4 flex items-center justify-between rounded p-3">
             <div className="flex-1 truncate">
-              <span className="block text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="text-muted-foreground block text-sm">
                 Your ID:
               </span>
               <span className="font-mono text-sm">
@@ -645,7 +643,7 @@ export default function Home() {
                 setShowCopied(true);
                 setTimeout(() => setShowCopied(false), 2000);
               }}
-              className="ml-2 rounded-full p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              className="hover:bg-accent/50 ml-2 rounded-full p-2"
               aria-label="Copy ID"
             >
               <Copy className="h-4 w-4" />
@@ -655,7 +653,7 @@ export default function Home() {
       </div>
 
       {/* Device Radar - Responsive sizing */}
-      <div className="mb-6 rounded-lg border border-neutral-800 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
+      <div className="bg-card mb-6 rounded-lg border p-4 shadow-sm md:mb-8 md:p-6">
         <DeviceRadar
           devices={connectedUsers
             .filter((user) => user.id !== userid)
@@ -679,7 +677,7 @@ export default function Home() {
       </div>
 
       {/* Send Files Section - Responsive grid */}
-      <div className="mb-6 rounded-lg border border-neutral-800 p-4 md:mb-8 md:p-6 dark:border-zinc-800">
+      <div className="bg-card mb-6 rounded-lg border p-4 shadow-sm md:mb-8 md:p-6">
         <h2 className="mb-4 text-lg font-semibold md:text-xl">
           Send Files or Folders
         </h2>
@@ -696,7 +694,7 @@ export default function Home() {
                   multiple
                   onChange={handleFileChange}
                   ref={fileInputRef}
-                  className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
+                  className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             </div>
@@ -711,7 +709,7 @@ export default function Home() {
                   webkitdirectory=""
                   onChange={handleFolderChange}
                   ref={folderInputRef}
-                  className="block w-full rounded-md border border-zinc-300 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-zinc-100 file:px-4 file:py-2 file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:border-zinc-700 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700"
+                  className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 />
               </div>
             </div>
@@ -720,12 +718,12 @@ export default function Home() {
           {selectedFiles.length > 0 && (
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                <span className="text-muted-foreground text-sm">
                   {selectedFiles.length} item(s) selected
                 </span>
                 <button
                   onClick={clearFiles}
-                  className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400"
+                  className="text-destructive hover:text-destructive/80 text-sm"
                 >
                   Clear all
                 </button>
@@ -734,17 +732,17 @@ export default function Home() {
                 {selectedFiles.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between border-b p-2 last:border-b-0 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="hover:bg-accent/50 flex items-center justify-between border-b p-2 last:border-b-0"
                   >
-                    <div className="flex items-center text-sm text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center text-sm">
                       {item.relativePath.includes("/") ?
                         <FolderIcon className="mr-2 h-4 w-4 text-yellow-500" />
-                      : <FileIcon className="mr-2 h-4 w-4" />}
+                      : <FileIcon className="mr-2 h-4 w-4 text-blue-400" />}
                       <div className="min-w-0">
                         <div className="truncate">
                           {item.relativePath.includes("/") ?
                             <>
-                              <span className="text-zinc-400 dark:text-zinc-500">
+                              <span className="text-muted-foreground">
                                 {item.relativePath
                                   .split("/")
                                   .slice(0, -1)
@@ -755,14 +753,14 @@ export default function Home() {
                             </>
                           : item.file.name}
                         </div>
-                        <div className="text-xs text-zinc-400 dark:text-zinc-500">
+                        <div className="text-muted-foreground text-xs">
                           {formatFileSize(item.file.size)}
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => removeFile(index)}
-                      className="rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+                      className="text-muted-foreground hover:bg-accent hover:text-foreground rounded-full p-1"
                       aria-label="Remove file"
                     >
                       <X className="h-4 w-4" />
@@ -782,12 +780,12 @@ export default function Home() {
                 {recipientIds.map((id) => (
                   <div
                     key={id}
-                    className="flex items-center rounded-full bg-zinc-100 px-3 py-1 text-sm dark:bg-zinc-800"
+                    className="bg-accent flex items-center rounded-full px-3 py-1 text-sm"
                   >
                     <span className="mr-2">{id.slice(0, 8)}...</span>
                     <button
                       onClick={() => toggleRecipient(id)}
-                      className="rounded-full p-1 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-300"
+                      className="text-muted-foreground hover:bg-accent/50 hover:text-foreground rounded-full p-1"
                       aria-label="Remove recipient"
                     >
                       <X className="h-3 w-3" />
@@ -805,7 +803,7 @@ export default function Home() {
               selectedFiles.length === 0 ||
               recipientIds.length === 0
             }
-            className="flex w-full items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 dark:disabled:bg-zinc-700 dark:disabled:text-zinc-400"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex w-full items-center justify-center rounded-md px-4 py-2 text-sm font-medium shadow transition-colors focus-visible:ring-1 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
           >
             {isUploading ?
               <>
@@ -830,21 +828,21 @@ export default function Home() {
               return (
                 <div key={fileId}>
                   <div className="mb-1 flex justify-between">
-                    <p className="max-w-[70%] truncate text-sm text-zinc-600 dark:text-zinc-400">
+                    <p className="max-w-[70%] truncate text-sm">
                       {filePath ? `${filePath}/` : ""}
                       {fileName}
                     </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="text-muted-foreground text-xs">
                       {transferSpeed[fileId] || "Calculating..."}
                     </p>
                   </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
+                  <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">
                     <div
-                      className="h-2 rounded-full bg-zinc-900 transition-all duration-300 dark:bg-white"
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
                       style={{ width: `${Math.round(fileProgress)}%` }}
                     ></div>
                   </div>
-                  <p className="mt-1 text-right text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-muted-foreground mt-1 text-right text-xs">
                     {Math.round(fileProgress)}% Uploaded
                   </p>
                 </div>
@@ -856,16 +854,16 @@ export default function Home() {
 
       {/* Received Files Section - Responsive layout */}
       {receivedFiles.length > 0 && (
-        <div className="rounded-lg border border-neutral-800 p-4 md:p-6 dark:border-zinc-800">
+        <div className="bg-card rounded-lg border p-4 shadow-sm md:p-6">
           <div className="mb-4 flex flex-col items-start justify-between sm:flex-row sm:items-center">
             <h2 className="text-lg font-semibold md:text-xl">Received Files</h2>
             <div className="mt-2 flex items-center space-x-2 sm:mt-0">
-              <span className="text-sm text-zinc-500 dark:text-zinc-400">
+              <span className="text-muted-foreground text-sm">
                 {receivedFiles.length} item(s)
               </span>
               <button
                 onClick={downloadAllFiles}
-                className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium shadow transition-colors"
               >
                 <ArrowDown className="mr-1 h-4 w-4" />
                 <span className="hidden sm:inline">Download All</span>
@@ -894,10 +892,7 @@ export default function Home() {
                 <>
                   {/* Display folders first */}
                   {Object.entries(folders).map(([path, files]) => (
-                    <div
-                      key={path}
-                      className="rounded-md bg-zinc-100 p-4 dark:bg-zinc-800"
-                    >
+                    <div key={path} className="bg-accent rounded-md p-4">
                       <div className="mb-2 flex flex-col items-start justify-between sm:flex-row sm:items-center">
                         <div className="mb-2 flex items-center sm:mb-0">
                           <FolderIcon className="mr-2 h-6 w-6 text-yellow-500" />
@@ -907,7 +902,7 @@ export default function Home() {
                         </div>
                         <button
                           onClick={() => downloadFolder(path)}
-                          className="inline-flex items-center rounded-md bg-zinc-900 px-2 py-1 text-sm text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-2 py-1 text-sm font-medium shadow transition-colors"
                         >
                           <ArrowUpFromLine className="mr-1 h-3 w-3" />
                           <span className="hidden sm:inline">
@@ -923,13 +918,13 @@ export default function Home() {
                             className="flex items-center justify-between border-b py-2 last:border-b-0"
                           >
                             <div className="flex max-w-[70%] items-center">
-                              <FileIcon className="mr-2 h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+                              <FileIcon className="text-muted-foreground mr-2 h-4 w-4" />
                               <span className="truncate">{file.name}</span>
                             </div>
                             <a
                               href={file.file}
                               download={file.name}
-                              className="text-sm whitespace-nowrap text-blue-500 hover:text-blue-700 dark:hover:text-blue-400"
+                              className="text-primary hover:text-primary/80 text-sm whitespace-nowrap"
                             >
                               Download
                             </a>
@@ -943,15 +938,15 @@ export default function Home() {
                   {rootFiles.map((file, index) => (
                     <div
                       key={index}
-                      className="flex flex-col items-start rounded-md bg-zinc-100 p-4 sm:flex-row sm:items-center dark:bg-zinc-800"
+                      className="bg-accent flex flex-col items-start rounded-md p-4 sm:flex-row sm:items-center"
                     >
                       <div className="mb-2 flex items-center sm:mb-0">
-                        <FileIcon className="mr-3 h-8 w-8 text-zinc-600 dark:text-zinc-300" />
+                        <FileIcon className="text-muted-foreground mr-3 h-8 w-8" />
                         <div className="min-w-0">
                           <p className="max-w-[200px] truncate font-medium sm:max-w-none">
                             {file.name}
                           </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="text-muted-foreground text-xs">
                             {formatFileSize(file.size)} •{" "}
                             {file.receivedAt.toLocaleTimeString([], {
                               hour: "2-digit",
@@ -963,7 +958,7 @@ export default function Home() {
                       <a
                         href={file.file}
                         download={file.name}
-                        className="mt-2 ml-auto inline-flex items-center rounded-md bg-zinc-900 px-3 py-1.5 text-white transition-colors hover:bg-zinc-800 sm:mt-0 sm:ml-4 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 mt-2 ml-auto inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium shadow transition-colors sm:mt-0 sm:ml-4"
                       >
                         <ArrowDown className="mr-1 h-4 w-4" />
                         Download

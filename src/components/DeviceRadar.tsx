@@ -79,7 +79,7 @@ const DeviceItem = ({
             >
               <div className="relative flex-col">
                 <motion.div
-                  initial={{ scale: 1, opacity: 0 }} // Start from invisible
+                  initial={{ scale: 1, opacity: 0 }}
                   animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
                   transition={{
                     duration: 1.5,
@@ -89,8 +89,7 @@ const DeviceItem = ({
                   }}
                   className="absolute inset-0 -z-10 rounded-full bg-blue-500"
                 />
-                {/* Badge */}
-                <div className="relative flex p-1 items-center justify-center rounded-full bg-blue-500 text-[10px] font-medium text-white shadow-md">
+                <div className="relative flex items-center justify-center rounded-full bg-blue-600 p-1 text-[10px] font-medium text-white shadow-md">
                   Suggested
                 </div>
               </div>
@@ -100,16 +99,16 @@ const DeviceItem = ({
           <Avatar
             className={`h-10 w-10 border-2 transition-all sm:h-12 sm:w-12 ${
               device.online ?
-                "border-blue-500 hover:border-blue-600"
-              : "border-gray-300"
-            } ${isSelected ? "ring-4 ring-blue-400/30" : ""}`}
+                "border-blue-500 hover:border-blue-400"
+              : "border-gray-600"
+            } ${isSelected ? "ring-4 ring-blue-500/30" : ""}`}
           >
             <AvatarImage src={device.avatar} alt={device.name} />
             <AvatarFallback
               className={`transition-colors ${
-                isSelected ? "bg-blue-500 text-white"
-                : device.online ? "bg-blue-100 text-gray-800"
-                : "bg-gray-200 text-gray-800"
+                isSelected ? "bg-blue-600 text-white"
+                : device.online ? "bg-blue-900/50 text-blue-200"
+                : "bg-gray-800 text-gray-400"
               }`}
             >
               <DeviceIcon type={device.type} />
@@ -131,10 +130,10 @@ const DeviceItem = ({
             />
           )}
         </motion.div>
-        <span className="mt-1 text-xs font-medium whitespace-nowrap text-gray-800 sm:mt-2">
+        <span className="mt-1 text-xs font-medium whitespace-nowrap text-gray-100 sm:mt-2">
           {device.name}
         </span>
-        <span className="text-[10px] text-gray-600">
+        <span className="text-[10px] text-gray-400">
           {device.online ? "Online" : "Offline"}
         </span>
       </div>
@@ -173,7 +172,6 @@ export default function DeviceRadar({
         const baseX = Math.cos(angle) * radius;
         const baseY = Math.sin(angle) * radius;
 
-        // Add some randomness but keep devices generally in their sector
         newPositions[device.id] = {
           x: baseX + (Math.random() * centerOffset * 2 - centerOffset),
           y: baseY + (Math.random() * centerOffset * 2 - centerOffset),
@@ -197,10 +195,10 @@ export default function DeviceRadar({
         animate={{ opacity: 1, y: 0 }}
         className="mb-4 text-center sm:mb-8"
       >
-        <h1 className="mb-1 text-2xl font-bold text-gray-900 sm:text-3xl">
+        <h1 className="mb-1 text-2xl font-bold text-white sm:text-3xl">
           Nearby Devices
         </h1>
-        <p className="text-sm text-gray-600 sm:text-base">
+        <p className="text-xs text-gray-400">
           {onlineCount} {onlineCount === 1 ? "device" : "devices"} active in
           your network
         </p>
@@ -214,13 +212,13 @@ export default function DeviceRadar({
         }}
       >
         {/* Radar background elements */}
-        <div className="absolute inset-0 rounded-full border border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 backdrop-blur-sm" />
+        <div className="absolute inset-0 rounded-full border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-950 backdrop-blur-sm" />
 
         {/* Radar circles */}
         {[0, 0.25, 0.5, 0.75].map((size) => (
           <div
             key={size}
-            className="absolute rounded-full border border-gray-200/80"
+            className="absolute rounded-full border border-gray-800"
             style={{
               inset: `${size * 100}%`,
             }}
@@ -233,7 +231,7 @@ export default function DeviceRadar({
             className="absolute top-0 left-0 h-full w-full origin-center"
             style={{
               background:
-                "conic-gradient(from 0deg, transparent 0deg, rgba(99, 179, 237, 0.25) 0deg, rgba(99, 179, 237, 0.25) 90deg, transparent 90deg)",
+                "conic-gradient(from 0deg, transparent 0deg, rgba(59, 130, 246, 0.15) 0deg, rgba(59, 130, 246, 0.15) 90deg, transparent 90deg)",
             }}
             animate={{ rotate: 360 }}
             transition={{
