@@ -19,7 +19,21 @@ import { saveAs } from "file-saver";
 import { QRCodeSVG } from "qrcode.react";
 import { QrCodeIcon } from "@heroicons/react/24/outline";
 
-const connectURL = import.meta.env.VITE_CONNECT_URL
+const connectURL = import.meta.env.VITE_CONNECT_URL;
+
+interface TransferLog {
+  id: string;
+  timestamp: Date;
+  type: "sent" | "received";
+  fileName: string;
+  fileSize: string;
+  status: "completed" | "failed" | "in-progress";
+  transferTime?: string;
+  transferSpeed?: string;
+  path?: string;
+  recipients?: string[];
+}
+
 interface ReceivedFile {
   name: string;
   file: string;
@@ -47,6 +61,8 @@ export default function Home() {
   );
   const [showQrCode, setShowQrCode] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
+  const [transferLogs, setTransferLogs] = useState<TransferLog[]>([]);
+  const [showLogs, setShowLogs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,29 +88,66 @@ export default function Home() {
   const [connectedUsers, setConnectedUsers] = useState<User[]>([]);
 
   useEffect(() => {
+    const savedLogs = localStorage.getItem("fileTransferLogs");
+    if (savedLogs) {
+      try {
+        const parsedLogs = JSON.parse(savedLogs, (key, value) => {
+          if (key === "timestamp") return new Date(value);
+          return value;
+        });
+        setTransferLogs(parsedLogs);
+      } catch (e) {
+        console.error("Failed to parse logs from localStorage", e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (transferLogs.length > 0) {
+      localStorage.setItem("fileTransferLogs", JSON.stringify(transferLogs));
+    }
+  }, [transferLogs]);
+
+  // Clear logs when user ID changes
+  useEffect(() => {
+    if (userid) {
+      setTransferLogs([]);
+      localStorage.removeItem("fileTransferLogs");
+    }
+  }, [userid]);
+
+  const clearTransferLogs = () => {
+    setTransferLogs([]);
+    localStorage.removeItem("fileTransferLogs");
+  };
+
+  const addTransferLog = (log: Omit<TransferLog, "id" | "timestamp">) => {
+    const newLog: TransferLog = {
+      id: Date.now().toString(),
+      timestamp: new Date(),
+      ...log,
+    };
+    setTransferLogs((prev) => [newLog, ...prev].slice(0, 100));
+  };
+
+  useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    console.log(urlParams);
     const connectTo = urlParams.get("connect");
-  
+
     if (connectTo && connectTo !== userid) {
-      // Add to recipients if not already there 
       if (!recipientIds.includes(connectTo)) {
         setRecipientIds((prev) => [...prev, connectTo]);
       }
-  
-      // Redirect to /home without parameters
       window.history.replaceState(null, "", "/home");
     }
 
     const onConnect = () => {
-      console.log("✅ Connected:", socket.id);
       setIsConnected(true);
       socket.emit("register", { userId: socket.id });
       if (socket.id) setuserid(socket.id);
     };
 
     const onDisconnect = () => {
-      console.log("❌ Disconnected");
       setIsConnected(false);
     };
 
@@ -109,11 +162,10 @@ export default function Home() {
       size: number;
       path?: string;
     }) => {
-      console.log(`📂 Receiving file: ${path ? path + "/" : ""}${name}`);
       fileChunks.current[fileId] = {
         name,
         chunks: [],
-        size: size || 0, // Ensure size is always a number
+        size: size || 0,
         startedAt: Date.now(),
         path,
       };
@@ -140,16 +192,15 @@ export default function Home() {
       const receivedChunks =
         fileChunks.current[fileId].chunks.filter(Boolean).length;
 
-      // Calculate transfer speed
       const now = Date.now();
       const loaded =
         (receivedChunks / totalChunks) * fileChunks.current[fileId].size;
       const speedData = speedCalculations.current[fileId];
 
       if (speedData && now > speedData.lastTime) {
-        const timeDiff = (now - speedData.lastTime) / 1000; // in seconds
+        const timeDiff = (now - speedData.lastTime) / 1000;
         const loadedDiff = loaded - speedData.lastLoaded;
-        const speed = loadedDiff / timeDiff; // bytes per second
+        const speed = loadedDiff / timeDiff;
 
         setTransferSpeed((prev) => ({
           ...prev,
@@ -172,13 +223,24 @@ export default function Home() {
         chunks,
         size: originalSize,
         path,
+        startedAt,
       } = fileChunks.current[fileId];
       const blob = new Blob(chunks);
       const url = URL.createObjectURL(blob);
 
-      // Use blob.size as fallback if originalSize is not valid
       const finalSize =
         originalSize && !isNaN(originalSize) ? originalSize : blob.size;
+      const transferTime = (Date.now() - startedAt) / 1000;
+
+      addTransferLog({
+        type: "received",
+        fileName: name,
+        fileSize: formatFileSize(finalSize),
+        status: "completed",
+        transferTime: `${transferTime.toFixed(2)}s`,
+        transferSpeed: formatSpeed(finalSize / transferTime),
+        path,
+      });
 
       setReceivedFiles((prev) => [
         ...prev,
@@ -205,12 +267,9 @@ export default function Home() {
 
       delete fileChunks.current[fileId];
       delete speedCalculations.current[fileId];
-
-      console.log(`✅ File received: ${path ? path + "/" : ""}${name}`);
     };
 
     const onUsersList = (users: User[]) => {
-      console.log("📋 Received users list:", users);
       setConnectedUsers(users);
     };
 
@@ -318,13 +377,28 @@ export default function Home() {
     setProgress({});
     setTransferSpeed({});
 
-    const chunkSize = 256 * 1024; // 256KB chunks
+    const chunkSize = 256 * 1024;
+    const transferId = Date.now().toString();
+
+    selectedFiles.forEach(({ file, relativePath }) => {
+      addTransferLog({
+        type: "sent",
+        fileName: file.name,
+        fileSize: formatFileSize(file.size),
+        status: "in-progress",
+        path:
+          relativePath.includes("/") ?
+            relativePath.split("/").slice(0, -1).join("/")
+          : undefined,
+        recipients: recipientIds,
+      });
+    });
 
     try {
       for (const recipientId of recipientIds) {
         for (const { file, relativePath } of selectedFiles) {
           const totalChunks = Math.ceil(file.size / chunkSize);
-          const fileId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+          const fileId = `${transferId}-${Math.random().toString(36).slice(2, 9)}`;
           const startTime = Date.now();
 
           socket.emit("file-start", {
@@ -369,6 +443,7 @@ export default function Home() {
             }));
           }
 
+          const transferTime = (Date.now() - startTime) / 1000;
           socket.emit("file-end", {
             fileId,
             name: file.name,
@@ -380,8 +455,18 @@ export default function Home() {
           });
         }
       }
+
+      setTransferLogs((prev) =>
+        prev.map((log) =>
+          log.id.startsWith(transferId) ? { ...log, status: "completed" } : log,
+        ),
+      );
     } catch (error) {
-      console.error("Error during file transfer:", error);
+      setTransferLogs((prev) =>
+        prev.map((log) =>
+          log.id.startsWith(transferId) ? { ...log, status: "failed" } : log,
+        ),
+      );
     } finally {
       setIsUploading(false);
       setSelectedFiles([]);
@@ -440,6 +525,96 @@ export default function Home() {
     saveAs(content, `${folderName}.zip`);
   };
 
+  const TransferLogPanel = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+      {" "}
+      <div className="w-full max-w-4xl rounded-lg bg-white p-6 shadow-xl dark:bg-zinc-900">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">File Transfer History</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={clearTransferLogs}
+              className="rounded-md bg-red-100 px-3 py-1 text-sm text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-200 dark:hover:bg-red-800"
+            >
+              Clear History
+            </button>
+            <button
+              onClick={() => setShowLogs(false)}
+              className="rounded-full p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[70vh] overflow-y-auto rounded-lg border dark:border-zinc-700">
+          {transferLogs.length === 0 ?
+            <div className="p-4 text-center text-zinc-500">
+              No transfer history yet
+            </div>
+          : <div className="divide-y dark:divide-zinc-700">
+              {transferLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className={`p-3 text-sm ${
+                    log.status === "failed" ? "bg-red-50 dark:bg-red-900/30"
+                    : log.status === "in-progress" ?
+                      "bg-blue-50 dark:bg-blue-900/30"
+                    : "bg-white dark:bg-zinc-900"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {log.type === "sent" ?
+                          <ArrowUpFromLine className="h-4 w-4 text-blue-500" />
+                        : <CheckCircle className="h-4 w-4 text-green-500" />}
+                        <div>
+                          <div className="font-medium">
+                            {log.path ? `${log.path}/` : ""}
+                            {log.fileName}
+                          </div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {log.fileSize} •{" "}
+                            {log.type === "sent" ? "Sent to" : "Received from"}
+                            {log.recipients ?
+                              ` ${log.recipients.length} recipient(s)`
+                            : ""}
+                          </div>
+                        </div>
+                      </div>
+                      {log.transferTime && (
+                        <div className="mt-1 pl-6 text-xs text-zinc-500 dark:text-zinc-400">
+                          {log.transferTime} • {log.transferSpeed}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-2 flex flex-col items-end">
+                      <span
+                        className={`rounded-full px-2 py-1 text-xs ${
+                          log.status === "completed" ?
+                            "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                          : log.status === "failed" ?
+                            "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                        }`}
+                      >
+                        {log.status}
+                      </span>
+                      <span className="mt-1 text-xs text-zinc-400">
+                        {log.timestamp.toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-4 md:p-6">
       {/* Connection Status */}
@@ -453,13 +628,25 @@ export default function Home() {
               Status: {isConnected ? "Connected" : "Disconnected"}
             </span>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowLogs(true)}
+              className="flex items-center gap-1 rounded-md bg-zinc-100 px-3 py-1 text-sm hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+            >
+              <span>View History</span>
+              {transferLogs.length > 0 && (
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium dark:bg-zinc-700">
+                  {transferLogs.length}
+                </span>
+              )}
+            </button>
             <RefreshCw
-              className="mr-2 h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
+              className="h-5 w-5 cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-300"
               onClick={() => window.location.reload()}
             />
           </div>
         </div>
+
         {isConnected && (
           <div className="mb-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
             <div className="flex items-center justify-between">
@@ -507,6 +694,7 @@ export default function Home() {
             )}
           </div>
         )}
+
         {userid && (
           <div className="mt-4 flex items-center justify-between rounded bg-zinc-100 p-3 dark:bg-zinc-800">
             <div className="flex-1 truncate">
@@ -516,7 +704,11 @@ export default function Home() {
               <span className="font-mono text-sm">{userid}</span>
             </div>
             <button
-              onClick={() => copyToClipboard(userid)}
+              onClick={() => {
+                copyToClipboard(userid);
+                setShowCopied(true);
+                setTimeout(() => setShowCopied(false), 2000);
+              }}
               className="ml-2 rounded-full p-2 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               aria-label="Copy ID"
             >
@@ -825,6 +1017,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Transfer Log Panel */}
+      {showLogs && <TransferLogPanel />}
     </main>
   );
 }
